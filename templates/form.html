@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Générateur de Reçu</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script>
+    function togglePaymentReason() {
+      const paymentType = document.getElementById('payment_type').value;
+      const reasonField = document.getElementById('payment_reason_field');
+      
+      if (paymentType === 'one_time') {
+        reasonField.style.display = 'block';
+        document.getElementById('payment_reason').required = true;
+      } else {
+        reasonField.style.display = 'none';
+        document.getElementById('payment_reason').required = false;
+        document.getElementById('payment_reason').value = '';
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>Générateur de Reçu</h2>
+    <form action="/generate" method="POST">
+      <label for="name">Nom du Client:</label>
+      <input type="text" name="name" id="name" required>
+
+      <label for="description">Description:</label>
+      <input type="text" name="description" id="description" required>
+
+      <label for="payment_type">Type de Paiement:</label>
+      <select name="payment_type" id="payment_type" onchange="togglePaymentReason()" required>
+        <option value="">-- Sélectionner le Type de Paiement --</option>
+        <option value="recurring_monthly">Paiement Mensuel Récurrent</option>
+        <option value="one_time">Paiement Unique</option>
+      </select>
+
+      <div id="payment_reason_field" style="display: none;">
+        <label for="payment_reason">Raison du Paiement Unique:</label>
+        <input type="text" name="payment_reason" id="payment_reason">
+      </div>
+
+      <label for="price">Prix ($):</label>
+      <input type="number" step="0.01" name="price" id="price" required>
+
+      <label for="amount_in_letters">Montant en Lettres:</label>
+      <input type="text" name="amount_in_letters" id="amount_in_letters" required>
+
+      <button type="submit">Générer PDF</button>
+    </form>
+  </div>
+</body>
+</html>
