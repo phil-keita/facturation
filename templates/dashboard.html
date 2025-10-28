@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de Bord Financier</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="main-menu">
+    <a href="/">Reçu</a>
+    <a href="/expenses">Dépense</a>
+    <a href="/dashboard" class="active">Tableau de bord</a>
+  </nav>
+  
+  <div class="dashboard-container">
+    <div class="summary-cards">
+      <div class="card income">
+        <h3>Revenu Total</h3>
+        <p class="amount">{{ "%0.0f"|format(total_income)|replace(",", " ") }} FCFA</p>
+      </div>
+      
+      <div class="card expenses">
+        <h3>Dépenses Totales</h3>
+        <p class="amount">{{ "%0.0f"|format(total_expenses)|replace(",", " ") }} FCFA</p>
+      </div>
+      
+      <div class="card net">
+        <h3>Revenu Net</h3>
+        <p class="amount">{{ "%0.0f"|format(net_income)|replace(",", " ") }} FCFA</p>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h2>Revenus Mensuels</h2>
+        <canvas id="incomeChart"></canvas>
+      </div>
+      
+      <div class="chart-card">
+        <h2>Revenu Net (Tendance)</h2>
+        <canvas id="netIncomeChart"></canvas>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Revenus Mensuels</h2>
+      {% if monthly_income_data %}
+      <table>
+        <thead>
+          <tr>
+            <th>Mois</th>
+            <th>Revenu (FCFA)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for month, income in monthly_income_data %}
+          <tr>
+            <td>{{ month }}</td>
+            <td>{{ "%0.0f"|format(income)|replace(",", " ") }} FCFA</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="no-data">Aucune donnée disponible</p>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h2>Reçus Récents</h2>
+      {% if recent_receipts %}
+      <table>
+        <thead>
+          <tr>
+            <th>N° Reçu</th>
+            <th>Client</th>
+            <th>Description</th>
+            <th>Montant</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for receipt in recent_receipts %}
+          <tr>
+            <td>{{ receipt.receipt_number }}</td>
+            <td>{{ receipt.customer_name }}</td>
+            <td>{{ receipt.description }}</td>
+            <td>{{ "%0.0f"|format(receipt.price)|replace(",", " ") }} FCFA</td>
+            <td>{{ receipt.date.strftime('%Y-%m-%d') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="no-data">Aucun reçu enregistré</p>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h2>Dépenses Récentes</h2>
+      {% if recent_expenses %}
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Montant</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for expense in recent_expenses %}
+          <tr>
+            <td>{{ expense.description }}</td>
+            <td>{{ "%0.0f"|format(expense.amount)|replace(",", " ") }} FCFA</td>
+            <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="no-data">Aucune dépense enregistrée</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <script>
+    // Monthly income bar chart
+    const monthlyIncomeData = {{ monthly_income_data | tojson }};
+    const incomeLabels = monthlyIncomeData.map(item => item[0]);
+    const incomeValues = monthlyIncomeData.map(item => item[1]);
+
+    const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+    const incomeChart = new Chart(incomeCtx, {
+      type: 'bar',
+      data: {
+        labels: incomeLabels,
+        datasets: [{
+          label: 'Revenu (FCFA)',
+          data: incomeValues,
+          backgroundColor: 'rgba(0, 188, 212, 0.6)',
+          borderColor: 'rgba(0, 188, 212, 1)',
+          borderWidth: 2,
+          borderRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.parsed.y.toLocaleString('fr-FR') + ' FCFA';
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return value.toLocaleString('fr-FR') + ' FCFA';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Net income line chart
+    const monthlyNetData = {{ monthly_net_data | tojson }};
+    const netLabels = monthlyNetData.map(item => item[0]);
+    const netValues = monthlyNetData.map(item => item[1]);
+    
+    const netCtx = document.getElementById('netIncomeChart').getContext('2d');
+    const netIncomeChart = new Chart(netCtx, {
+      type: 'line',
+      data: {
+        labels: netLabels,
+        datasets: [{
+          label: 'Revenu Net (FCFA)',
+          data: netValues,
+          backgroundColor: 'rgba(0, 188, 212, 0.2)',
+          borderColor: 'rgba(0, 188, 212, 1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.parsed.y.toLocaleString('fr-FR') + ' FCFA';
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: function(value) {
+                return value.toLocaleString('fr-FR') + ' FCFA';
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

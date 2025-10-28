@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajouter une Dépense</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="main-menu">
+    <a href="/">Reçu</a>
+    <a href="/expenses" class="active">Dépense</a>
+    <a href="/dashboard">Tableau de bord</a>
+  </nav>
+  
+  <div class="form-wrapper">
+    <div class="container">
+      <h2>Ajouter une Dépense</h2>
+    <form action="/expenses" method="POST">
+      <label for="description">Description:</label>
+      <input type="text" name="description" id="description" required>
+      
+      <label for="amount">Montant (XOF):</label>
+      <input type="number" step="1" name="amount" id="amount" required>
+
+      <button type="submit">Ajouter Dépense</button>
+    </form>
+    </div>
+  </div>
+</body>
+</html>
