@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin - Users</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+      .container { max-width:900px; margin:24px auto }
+      table { width:100%; border-collapse:collapse }
+      th,td { border:1px solid #eee; padding:8px }
+      .form-inline { display:flex; gap:8px; align-items:center }
+      .btn { background:#00bcd4;color:#fff;border:none;padding:8px 12px;border-radius:4px }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Admin - Users</h1>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul>
+          {% for category, msg in messages %}
+            <li style="color: {% if category == 'danger' %}#c00{% else %}#080{% endif %};">{{ msg }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" class="form-inline">
+        <input name="username" placeholder="username" required>
+        <input name="password" placeholder="password" type="password" required>
+        <button class="btn" type="submit">Create user</button>
+      </form>
+
+      <h2>Existing Users</h2>
+      <table>
+        <thead><tr><th>Username</th><th>Created At</th></tr></thead>
+        <tbody>
+        {% for u in users %}
+          <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.created_at }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

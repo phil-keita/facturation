@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_file, redirect, url_for, session, flash
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 import os
 from weasyprint import HTML
@@ -21,7 +21,21 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+    # Ensure an initial admin user exists (username 'admin', password 'admin')
+    try:
+        from database import User
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin_user = User(username='admin', password_hash=generate_password_hash('admin'))
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Created initial admin user with username 'admin' and password 'admin'")
+    except Exception:
+        # If DB not ready or other error, ignore here; app will create on demand
+        pass
+
 from database import User
+
 
 # Simple session-based auth using the users table
 def login_required(f):
@@ -56,6 +70,32 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+
+@app.route('/admin', methods=['GET', 'POST'])
+@login_required
+def admin():
+    # only allow the admin username to manage users
+    if session.get('username') != 'admin':
+        flash('Admin access required', 'danger')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        if not username or not password:
+            flash('Username and password are required', 'danger')
+        else:
+            if User.query.filter_by(username=username).first():
+                flash('User already exists', 'danger')
+            else:
+                new_user = User(username=username, password_hash=generate_password_hash(password))
+                db.session.add(new_user)
+                db.session.commit()
+                flash(f'User {username} created', 'success')
+
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('admin.html', users=users)
 
 @app.route('/')
 @login_required
