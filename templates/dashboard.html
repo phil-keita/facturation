@@ -12,6 +12,7 @@
     <a href="/">Reçu</a>
     <a href="/expenses">Dépense</a>
     <a href="/dashboard" class="active">Tableau de bord</a>
+    {% if session.username == 'admin' %}<a href="/admin">Admin</a>{% endif %}
   </nav>
   
   <div class="dashboard-container">
