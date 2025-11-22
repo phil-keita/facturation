@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, send_file, redirect, url_for, session, flash
+from werkzeug.security import check_password_hash
 from datetime import datetime
 import os
 from weasyprint import HTML
@@ -20,11 +21,9 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# Simple session-based auth
-# Credentials are read from environment: ADMIN_USER, ADMIN_PASSWORD
-ADMIN_USER = os.getenv('ADMIN_USER', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'password')
+from database import User
 
+# Simple session-based auth using the users table
 def login_required(f):
     from functools import wraps
     @wraps(f)
@@ -41,7 +40,8 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '')
         password = request.form.get('password', '')
-        if username == ADMIN_USER and password == ADMIN_PASSWORD:
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
             session['logged_in'] = True
             session['username'] = username
             flash('Logged in successfully.', 'success')
