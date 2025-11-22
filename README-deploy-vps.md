@@ -70,6 +70,28 @@ crontab -e
 ```
 Consider offsite sync (rclone to object storage) for redundancy.
 
+### Backup script (recommended)
+A helper script `scripts/backup.sh` is included in the repository. It:
+- Dumps the Postgres database from the `db` service into a timestamped SQL file.
+- Archives the `receipts` directory mounted into the `web` service into a tarball.
+- Prunes backup files older than 30 days (configurable via `KEEP_DAYS`).
+
+Usage example:
+```bash
+sudo mkdir -p /opt/facturation_backups
+sudo chown $USER /opt/facturation_backups
+BACKUP_DIR=/opt/facturation_backups ./scripts/backup.sh
+```
+
+To run nightly via cron, add a line like:
+```cron
+0 2 * * * cd /path/to/facturation && BACKUP_DIR=/opt/facturation_backups ./scripts/backup.sh >> /var/log/facturation-backup.log 2>&1
+```
+
+Notes:
+- The script uses `docker compose exec` / `docker compose run`, so ensure the compose project is in the same directory when running the script.
+- Adjust `KEEP_DAYS` or `BACKUP_DIR` by exporting environment variables before running.
+
 ## 8. Updating App
 ```bash
 git pull
