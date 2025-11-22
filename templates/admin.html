@@ -6,54 +6,74 @@
     <title>Admin - Users</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
-      .container { max-width:900px; margin:24px auto }
-      table { width:100%; border-collapse:collapse }
-      th,td { border:1px solid #eee; padding:8px }
-      .form-inline { display:flex; gap:8px; align-items:center }
-      .btn { background:#00bcd4;color:#fff;border:none;padding:8px 12px;border-radius:4px }
+      /* Dedicated admin layout to avoid global .container width (300px) */
+      .admin-page { max-width: 960px; margin: 32px auto; padding: 0 16px; }
+      .admin-card { background: #fff; padding: 24px 28px; border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); overflow: hidden; }
+      .admin-card h1 { margin-top:0; font-size: 1.4rem; }
+      .flash-messages { list-style: none; padding: 0; margin: 0 0 16px 0; }
+      .flash-messages li { padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; }
+      .flash-messages li.success { background:#e0f7fa; color:#006064; }
+      .flash-messages li.danger { background:#ffebee; color:#c62828; }
+      .flash-messages li.warning { background:#fff8e1; color:#ff8f00; }
+      .admin-form { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+      .admin-form input { flex:1 1 220px; }
+      .admin-form button { flex:0 0 auto; padding:10px 18px; }
+      .admin-table-wrapper { overflow-x:auto; }
+      table.admin-table { width:100%; border-collapse: collapse; min-width:480px; }
+      table.admin-table thead { background:#00bcd4; color:#fff; }
+      table.admin-table th, table.admin-table td { padding:10px 12px; text-align:left; border-bottom:1px solid #e5e5e5; font-size:0.85rem; }
+      table.admin-table tbody tr:hover { background:#f5fafe; }
+      .btn { background:#00bcd4; color:#fff; border:none; padding:8px 14px; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+      .btn:hover { background:#0097a7; }
+      .btn-danger { background:#e53935; }
+      .btn-danger:hover { background:#c62828; }
+      @media (max-width:600px){ .admin-card { padding:20px 18px; } .admin-form input { flex:1 1 100%; } }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Admin - Users</h1>
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <ul>
-          {% for category, msg in messages %}
-            <li style="color: {% if category == 'danger' %}#c00{% else %}#080{% endif %};">{{ msg }}</li>
-          {% endfor %}
-          </ul>
-        {% endif %}
-      {% endwith %}
+    <div class="admin-page">
+      <div class="admin-card">
+        <h1>User Management</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flash-messages">
+            {% for category, msg in messages %}
+              <li class="{{ category }}">{{ msg }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
 
-      <form method="post" class="form-inline">
-        <input name="username" placeholder="username" required>
-        <input name="password" placeholder="password" type="password" required>
-        <button class="btn" type="submit">Create user</button>
-      </form>
+        <form method="post" class="admin-form" autocomplete="off">
+          <input name="username" placeholder="New username" required>
+          <input name="password" placeholder="Password" type="password" required>
+          <button class="btn" type="submit">Add User</button>
+        </form>
 
-      <h2>Existing Users</h2>
-      <table>
-        <thead><tr><th>Username</th><th>Created At</th><th>Actions</th></tr></thead>
-        <tbody>
-        {% for u in users %}
-          <tr>
-            <td>{{ u.username }}</td>
-            <td>{{ u.created_at }}</td>
-            <td>
-              {% if u.username != 'admin' %}
-              <form method="post" action="{{ url_for('admin_delete') }}" style="display:inline">
-                <input type="hidden" name="user_id" value="{{ u.id }}">
-                <button class="btn" type="submit" onclick="return confirm('Delete user {{ u.username }}?')">Delete</button>
-              </form>
-              {% else %}
-                —
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead><tr><th>Username</th><th>Created At</th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for u in users %}
+              <tr>
+                <td>{{ u.username }}</td>
+                <td>{{ u.created_at }}</td>
+                <td>
+                  {% if u.username != 'admin' %}
+                  <form method="post" action="{{ url_for('admin_delete') }}" style="display:inline">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <button class="btn btn-danger" type="submit" onclick="return confirm('Delete user {{ u.username }}?')">Delete</button>
+                  </form>
+                  {% else %}
+                    <span style="opacity:0.6">Protected</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </body>
 </html>
