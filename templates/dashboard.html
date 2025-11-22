@@ -13,6 +13,20 @@
     <a href="/expenses">Dépense</a>
     <a href="/dashboard" class="active">Tableau de bord</a>
     {% if session.username == 'admin' %}<a href="/admin">Admin</a>{% endif %}
+    
+    <div class="profile-menu">
+      <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <div class="profile-dropdown">
+        {% if session.username == 'admin' %}
+        <a href="/admin">Admin Panel</a>
+        <div class="divider"></div>
+        {% endif %}
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
   </nav>
   
   <div class="dashboard-container">

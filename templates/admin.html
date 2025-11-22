@@ -50,6 +50,25 @@
     </style>
   </head>
   <body>
+    <nav class="main-menu">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      <a href="/admin" class="active">Admin</a>
+      
+      <div class="profile-menu">
+        <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+          <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+          <span class="profile-name">{{ session.username }}</span>
+        </div>
+        <div class="profile-dropdown">
+          <a href="/">Dashboard</a>
+          <div class="divider"></div>
+          <a href="/logout">Logout</a>
+        </div>
+      </div>
+    </nav>
+
     <div class="admin-page">
       <div class="admin-header">
         <h1>User Management</h1>
