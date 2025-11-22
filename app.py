@@ -52,7 +52,7 @@ def login():
     # Determine next URL precedence: form -> query arg -> default
     form_next = request.form.get('next') if request.method == 'POST' else None
     arg_next = request.args.get('next')
-    next_url = form_next or arg_next
+    next_url = form_next or arg_next or None
     if request.method == 'POST':
         username = request.form.get('username', '')
         password = request.form.get('password', '')
@@ -61,8 +61,8 @@ def login():
             session['logged_in'] = True
             session['username'] = username
             flash('Logged in successfully.', 'success')
-            # If a next_url was provided, honor it. Otherwise, admins land on the admin UI.
-            if next_url:
+            # If a next_url was provided and is valid, honor it. Otherwise, admins land on the admin UI.
+            if next_url and next_url != 'None':
                 return redirect(next_url)
             if username == 'admin':
                 return redirect(url_for('admin'))
