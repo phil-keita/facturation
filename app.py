@@ -80,14 +80,34 @@ def logout():
 
 
 @app.route('/admin', methods=['GET', 'POST'])
-@login_required
 def admin():
-    # only allow the admin username to manage users
-    if session.get('username') != 'admin':
-        flash('Admin access required', 'danger')
-        return redirect(url_for('index'))
-
+    # Serve a login form at /admin for unauthenticated users so the URL stays clean.
+    # If a POST is received here, attempt login; only the admin user may access management.
     if request.method == 'POST':
+        # Handle login attempt posted to /admin
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            session['logged_in'] = True
+            session['username'] = username
+            flash('Logged in successfully.', 'success')
+            # Only allow admin user onto the admin UI
+            if username != 'admin':
+                flash('Admin access required', 'danger')
+                return redirect(url_for('index'))
+            # proceed to render admin UI below
+        else:
+            flash('Invalid credentials', 'danger')
+            # fall through to render login form again (still at /admin)
+
+    # If the user is not logged in or not admin, show login form (but keep URL /admin)
+    if not session.get('logged_in') or session.get('username') != 'admin':
+        return render_template('login.html', next='/admin', action_url=url_for('admin'))
+
+    # At this point user is logged in as admin and can manage users
+    if request.method == 'POST':
+        # This block handles creating users after successful admin login in the same request
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         if not username or not password:
