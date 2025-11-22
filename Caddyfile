@@ -1,5 +1,5 @@
 # replace with your real subdomain
-facturation.domain.com {
+facturation.marate.ai {
     reverse_proxy web:8000
 }
 
