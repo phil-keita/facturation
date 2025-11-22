@@ -1,0 +1,12 @@
+# Replace example.com with your domain.
+example.com {
+    encode gzip
+    header Strict-Transport-Security "max-age=31536000; includeSubDomains" 
+    reverse_proxy web:8000
+    # Optional basic auth (uncomment and replace user:hashedpass)
+    # basicauth {
+    #   user JDJhJDEwJEpiZ3F2Q2ZqM1p5RHV6b1pCek80Zk9odjVMcE5US0ZJd0x3TXFvM21tRmludlBzLzZlUFJxLzFx
+    # }
+}
+
+# Fallback HTTP (will redirect to HTTPS automatically)

@@ -4,9 +4,16 @@ import os
 from weasyprint import HTML
 from database import db, Receipt, Expense
 from sqlalchemy import func
+import secrets
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+
+# Secret key (use env or generate ephemeral for dev)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or secrets.token_hex(16)
+
+# Database URL from env (Postgres in production) or fallback to local SQLite
+database_url = os.getenv('DATABASE_URL') or 'sqlite:///data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -91,35 +98,23 @@ def dashboard():
     total_expenses = db.session.query(func.sum(Expense.amount)).scalar() or 0
     net_income = total_income - total_expenses
 
-    # Monthly income breakdown
-    monthly_income_query = (
-        db.session.query(
-            func.strftime("%Y-%m", Receipt.date).label("month"),
-            func.sum(Receipt.price).label("income")
-        )
-        .group_by("month")
-        .order_by("month")
-        .all()
-    )
-    monthly_income_data = [(row.month, float(row.income)) for row in monthly_income_query]
-    
-    # Monthly expenses breakdown
-    monthly_expenses_query = (
-        db.session.query(
-            func.strftime("%Y-%m", Expense.date).label("month"),
-            func.sum(Expense.amount).label("expenses")
-        )
-        .group_by("month")
-        .order_by("month")
-        .all()
-    )
-    monthly_expenses_data = {row.month: float(row.expenses) for row in monthly_expenses_query}
-    
-    # Calculate net income per month
-    monthly_net_data = []
-    for month, income in monthly_income_data:
-        expenses = monthly_expenses_data.get(month, 0)
-        monthly_net_data.append((month, income - expenses))
+    # Dialect-neutral monthly aggregation (group in Python for simplicity and portability)
+    receipts = db.session.query(Receipt.date, Receipt.price).all()
+    expenses_rows = db.session.query(Expense.date, Expense.amount).all()
+
+    income_by_month = {}
+    for dt, price in receipts:
+        key = dt.strftime('%Y-%m')
+        income_by_month[key] = income_by_month.get(key, 0) + float(price)
+
+    expenses_by_month = {}
+    for dt, amount in expenses_rows:
+        key = dt.strftime('%Y-%m')
+        expenses_by_month[key] = expenses_by_month.get(key, 0) + float(amount)
+
+    all_months = sorted(set(list(income_by_month.keys()) + list(expenses_by_month.keys())))
+    monthly_income_data = [(m, income_by_month.get(m, 0)) for m in all_months]
+    monthly_net_data = [(m, income_by_month.get(m, 0) - expenses_by_month.get(m, 0)) for m in all_months]
     
     # Recent receipts
     recent_receipts = Receipt.query.order_by(Receipt.date.desc()).limit(10).all()

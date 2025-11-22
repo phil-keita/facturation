@@ -1,3 +1,5 @@
 Flask
 WeasyPrint
 Flask-SQLAlchemy
+gunicorn
+psycopg[binary]
