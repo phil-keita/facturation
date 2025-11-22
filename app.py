@@ -83,8 +83,8 @@ def logout():
 def admin():
     # Serve a login form at /admin for unauthenticated users so the URL stays clean.
     # If a POST is received here, attempt login; only the admin user may access management.
-    if request.method == 'POST':
-        # Handle login attempt posted to /admin
+    if request.method == 'POST' and not (session.get('logged_in') and session.get('username') == 'admin'):
+        # Handle login attempt posted to /admin (only when not already logged-in as admin)
         username = request.form.get('username', '')
         password = request.form.get('password', '')
         user = User.query.filter_by(username=username).first()
@@ -96,7 +96,8 @@ def admin():
             if username != 'admin':
                 flash('Admin access required', 'danger')
                 return redirect(url_for('index'))
-            # proceed to render admin UI below
+            # Redirect after successful login to avoid treating this POST as a create-user action
+            return redirect(url_for('admin'))
         else:
             flash('Invalid credentials', 'danger')
             # fall through to render login form again (still at /admin)
@@ -106,8 +107,8 @@ def admin():
         return render_template('login.html', next='/admin', action_url=url_for('admin'))
 
     # At this point user is logged in as admin and can manage users
-    if request.method == 'POST':
-        # This block handles creating users after successful admin login in the same request
+    if request.method == 'POST' and (session.get('logged_in') and session.get('username') == 'admin'):
+        # This block handles creating users when an authenticated admin posts the create form
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         if not username or not password:
