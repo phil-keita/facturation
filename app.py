@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, send_file, redirect, url_for,
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 import os
-from weasyprint import HTML
 from database import db, Receipt, Expense
 from sqlalchemy import func, text
 import secrets
@@ -154,10 +153,18 @@ def generate_receipt():
 
     filename = f"receipt_{name}_{int(datetime.now().timestamp())}.pdf"
     pdf_path = os.path.join('receipts', filename)
-    HTML(string=html).write_pdf(pdf_path)
-
-    # Send PDF as a download
-    return send_file(pdf_path, as_attachment=True)
+    # Try to generate a PDF using WeasyPrint. If the native dependencies are
+    # missing (common on Windows), gracefully fall back to returning the
+    # rendered HTML so you can still test the UI without installing GTK.
+    try:
+        from weasyprint import HTML
+        HTML(string=html).write_pdf(pdf_path)
+        return send_file(pdf_path, as_attachment=True)
+    except Exception as e:
+        # Log to console for developer visibility and return HTML fallback
+        print("WeasyPrint PDF generation failed:", e)
+        flash('PDF generation is not available in this environment. Showing HTML fallback.', 'warning')
+        return html, 200, {'Content-Type': 'text/html'}
 
 @app.route('/expenses', methods=['GET', 'POST'])
 @login_required
