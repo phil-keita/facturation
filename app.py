@@ -49,7 +49,10 @@ def login_required(f):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    next_url = request.args.get('next') or url_for('index')
+    # Determine next URL precedence: form -> query arg -> default
+    form_next = request.form.get('next') if request.method == 'POST' else None
+    arg_next = request.args.get('next')
+    next_url = form_next or arg_next
     if request.method == 'POST':
         username = request.form.get('username', '')
         password = request.form.get('password', '')
@@ -58,7 +61,12 @@ def login():
             session['logged_in'] = True
             session['username'] = username
             flash('Logged in successfully.', 'success')
-            return redirect(next_url)
+            # If a next_url was provided, honor it. Otherwise, admins land on the admin UI.
+            if next_url:
+                return redirect(next_url)
+            if username == 'admin':
+                return redirect(url_for('admin'))
+            return redirect(url_for('index'))
         else:
             flash('Invalid credentials', 'danger')
             return render_template('login.html', next=next_url), 401
@@ -95,6 +103,34 @@ def admin():
 
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template('admin.html', users=users)
+
+
+@app.route('/admin/delete', methods=['POST'])
+@login_required
+def admin_delete():
+    # Only admin username may perform deletions
+    if session.get('username') != 'admin':
+        flash('Admin access required', 'danger')
+        return redirect(url_for('index'))
+
+    user_id = request.form.get('user_id')
+    if not user_id:
+        flash('Missing user id', 'danger')
+        return redirect(url_for('admin'))
+
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found', 'danger')
+        return redirect(url_for('admin'))
+
+    if user.username == 'admin':
+        flash('Cannot delete the admin account', 'danger')
+        return redirect(url_for('admin'))
+
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'User {user.username} deleted', 'success')
+    return redirect(url_for('admin'))
 
 @app.route('/')
 @login_required

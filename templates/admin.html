@@ -34,12 +34,22 @@
 
       <h2>Existing Users</h2>
       <table>
-        <thead><tr><th>Username</th><th>Created At</th></tr></thead>
+        <thead><tr><th>Username</th><th>Created At</th><th>Actions</th></tr></thead>
         <tbody>
         {% for u in users %}
           <tr>
             <td>{{ u.username }}</td>
             <td>{{ u.created_at }}</td>
+            <td>
+              {% if u.username != 'admin' %}
+              <form method="post" action="{{ url_for('admin_delete') }}" style="display:inline">
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <button class="btn" type="submit" onclick="return confirm('Delete user {{ u.username }}?')">Delete</button>
+              </form>
+              {% else %}
+                —
+              {% endif %}
+            </td>
           </tr>
         {% endfor %}
         </tbody>
