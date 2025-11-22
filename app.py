@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from flask import Flask, render_template, request, send_file, redirect, url_for, session, flash
 from datetime import datetime
 import os
 from weasyprint import HTML
@@ -20,11 +20,50 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+# Simple session-based auth
+# Credentials are read from environment: ADMIN_USER, ADMIN_PASSWORD
+ADMIN_USER = os.getenv('ADMIN_USER', 'admin')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'password')
+
+def login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    next_url = request.args.get('next') or url_for('index')
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+        if username == ADMIN_USER and password == ADMIN_PASSWORD:
+            session['logged_in'] = True
+            session['username'] = username
+            flash('Logged in successfully.', 'success')
+            return redirect(next_url)
+        else:
+            flash('Invalid credentials', 'danger')
+            return render_template('login.html', next=next_url), 401
+    return render_template('login.html', next=next_url)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     return render_template('form.html')
 
 @app.route('/generate', methods=['POST'])
+@login_required
 def generate_receipt():
     # Collect form data
     name = request.form['name']
@@ -81,6 +120,7 @@ def generate_receipt():
     return send_file(pdf_path, as_attachment=True)
 
 @app.route('/expenses', methods=['GET', 'POST'])
+@login_required
 def add_expense():
     if request.method == 'POST':
         description = request.form['description']
@@ -92,6 +132,7 @@ def add_expense():
     return render_template('add_expense.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     # Totals
     total_income = db.session.query(func.sum(Receipt.price)).scalar() or 0
