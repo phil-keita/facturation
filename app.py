@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 from weasyprint import HTML
 from database import db, Receipt, Expense
-from sqlalchemy import func
+from sqlalchemy import func, text
 import secrets
 
 app = Flask(__name__)
@@ -132,6 +132,14 @@ def dashboard():
         recent_receipts=recent_receipts,
         recent_expenses=recent_expenses
     )
+
+@app.route('/healthz')
+def healthz():
+    try:
+        db_ok = db.session.execute(text('SELECT 1')).scalar() == 1
+        return {'status': 'ok', 'db': db_ok}, 200
+    except Exception as e:
+        return {'status': 'error', 'error': str(e)}, 500
 
 if __name__ == '__main__':
     app.run(debug=True)
