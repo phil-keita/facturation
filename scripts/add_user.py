@@ -6,8 +6,14 @@ Usage:
   python scripts/add_user.py user pass   # creates single user
 """
 import sys
+import pathlib
 from getpass import getpass
 from werkzeug.security import generate_password_hash
+
+# Ensure project root is on sys.path so 'from app import app' works when
+# executing this script from the repo root or the scripts/ directory.
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 from app import app
 from database import db, User
