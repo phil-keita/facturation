@@ -11,7 +11,6 @@
     <a href="/">Reçu</a>
     <a href="/expenses" class="active">Dépense</a>
     <a href="/dashboard">Tableau de bord</a>
-    {% if session.username == 'admin' %}<a href="/admin">Admin</a>{% endif %}
     
     <div class="profile-menu">
       <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
@@ -20,7 +19,7 @@
       </div>
       <div class="profile-dropdown">
         {% if session.username == 'admin' %}
-        <a href="/admin">Admin Panel</a>
+        <a href="/admin">Gérer les utilisateurs</a>
         <div class="divider"></div>
         {% endif %}
         <a href="/logout">Logout</a>
