@@ -153,6 +153,50 @@ def admin_delete():
     flash(f'User {user.username} deleted', 'success')
     return redirect(url_for('admin'))
 
+
+@app.route('/account', methods=['GET', 'POST'])
+@login_required
+def account():
+    user = User.query.filter_by(username=session.get('username')).first()
+    if not user:
+        flash('User not found', 'danger')
+        return redirect(url_for('logout'))
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'update_username':
+            new_username = request.form.get('new_username', '').strip()
+            if not new_username:
+                flash('Username cannot be empty', 'danger')
+            elif new_username != user.username and User.query.filter_by(username=new_username).first():
+                flash('Username already taken', 'danger')
+            else:
+                user.username = new_username
+                session['username'] = new_username
+                db.session.commit()
+                flash('Username updated successfully', 'success')
+        
+        elif action == 'update_password':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+            
+            if not check_password_hash(user.password_hash, current_password):
+                flash('Current password is incorrect', 'danger')
+            elif not new_password or len(new_password) < 4:
+                flash('New password must be at least 4 characters', 'danger')
+            elif new_password != confirm_password:
+                flash('New passwords do not match', 'danger')
+            else:
+                user.password_hash = generate_password_hash(new_password)
+                db.session.commit()
+                flash('Password updated successfully', 'success')
+        
+        return redirect(url_for('account'))
+    
+    return render_template('account.html', user=user)
+
 @app.route('/')
 @login_required
 def index():
