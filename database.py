@@ -13,12 +13,18 @@ class Receipt(db.Model):
     price = db.Column(db.Float)
     amount_in_letters = db.Column(db.String(200))
     date = db.Column(db.DateTime, default=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    user = db.relationship('User', backref='receipts')
 
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(200))
     amount = db.Column(db.Float)
     date = db.Column(db.DateTime, default=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    user = db.relationship('User', backref='expenses')
 
 
 class User(db.Model):

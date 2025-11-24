@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mon Compte</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .account-page { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-    .account-header { background: #fff; padding: 20px 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; }
-    .account-header h1 { margin: 0; font-size: 1.5rem; color: #333; }
+    .account-page { max-width: 800px; width: 100%; margin: 2rem auto; padding: 0 1rem; box-sizing: border-box; }
+    @media (max-width: 640px) {
+      .account-page { margin: 1rem auto; }
+      .account-header, .account-section { padding: 1rem; }
+    }
+    .account-header { background: #fff; padding: 20px 24px; border-radius: 12px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.1); margin-bottom: 24px; border: 1px solid #e0e0e0; }
+    .account-header h1 { margin: 0; font-size: 1.5rem; background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; }
     
-    .account-section { background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    .account-section { background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.1); margin-bottom: 24px; border: 1px solid #e0e0e0; }
     .account-section h2 { margin: 0 0 16px 0; font-size: 1.1rem; color: #555; border-bottom: 2px solid #00bcd4; padding-bottom: 8px; }
     
     .flash-messages { list-style: none; padding: 0; margin: 0 0 24px 0; }
@@ -20,13 +25,17 @@
     
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px; font-weight: 500; }
-    .form-group input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
-    .form-group input:focus { outline: none; border-color: #00bcd4; }
+    .input-wrapper { position: relative; }
+    .form-group input { width: 100%; padding: 10px 40px 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box; transition: all 0.3s ease; }
+    .form-group input:focus { outline: none; border-color: #00bcd4; box-shadow: 0 0 0 3px rgba(0,188,212,0.1); }
+    .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; user-select: none; font-size: 0.9rem; transition: color 0.2s ease; }
+    .password-toggle:hover { color: #00bcd4; }
     
-    .btn { background: #00bcd4; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
-    .btn:hover { background: #0097a7; }
+    .btn { background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 4px 15px 0 rgba(0,188,212,0.4); }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(0,188,212,0.6); }
+    .btn:active { transform: translateY(0); }
     
-    .info-text { font-size: 0.85rem; color: #666; margin-top: 8px; }
+    .info-text { font-size: 0.85rem; color: #666; margin: 4px 0 0 0; }
   </style>
 </head>
 <body>
@@ -85,20 +94,48 @@
         <input type="hidden" name="action" value="update_password">
         <div class="form-group">
           <label for="current_password">Mot de passe actuel</label>
-          <input type="password" name="current_password" id="current_password" required>
+          <div class="input-wrapper">
+            <input type="password" name="current_password" id="current_password" required>
+            <span class="password-toggle" onclick="togglePasswordField('current_password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </span>
+          </div>
         </div>
         <div class="form-group">
           <label for="new_password">Nouveau mot de passe</label>
-          <input type="password" name="new_password" id="new_password" required>
+          <div class="input-wrapper">
+            <input type="password" name="new_password" id="new_password" required>
+            <span class="password-toggle" onclick="togglePasswordField('new_password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </span>
+          </div>
           <p class="info-text">Au moins 4 caractères</p>
         </div>
         <div class="form-group">
           <label for="confirm_password">Confirmer le nouveau mot de passe</label>
-          <input type="password" name="confirm_password" id="confirm_password" required>
+          <div class="input-wrapper">
+            <input type="password" name="confirm_password" id="confirm_password" required>
+            <span class="password-toggle" onclick="togglePasswordField('confirm_password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </span>
+          </div>
         </div>
         <button type="submit" class="btn">Mettre à jour le mot de passe</button>
       </form>
     </div>
   </div>
+  <script>
+    function togglePasswordField(fieldId, toggleIcon) {
+      const input = document.getElementById(fieldId);
+      const icon = toggleIcon.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
+    }
+  </script>
 </body>
 </html>

@@ -60,7 +60,6 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             session['logged_in'] = True
             session['username'] = username
-            flash('Logged in successfully.', 'success')
             # If a next_url was provided and is valid, honor it. Otherwise, admins land on the admin UI.
             if next_url and next_url != 'None':
                 return redirect(next_url)
@@ -223,6 +222,9 @@ def generate_receipt():
     # Generate receipt number (using timestamp for uniqueness)
     receipt_number = f"REC-{int(datetime.now().timestamp())}"
     
+    # Get current user
+    current_user = User.query.filter_by(username=session.get('username')).first()
+    
     # Save to database
     new_receipt = Receipt(
         receipt_number=receipt_number,
@@ -232,7 +234,8 @@ def generate_receipt():
         payment_reason=payment_reason,
         price=price,
         amount_in_letters=amount_in_letters,
-        date=date
+        date=date,
+        user_id=current_user.id if current_user else None
     )
     db.session.add(new_receipt)
     db.session.commit()
@@ -273,7 +276,13 @@ def add_expense():
     if request.method == 'POST':
         description = request.form['description']
         amount = float(request.form['amount'])
-        new_expense = Expense(description=description, amount=amount, date=datetime.now())
+        current_user = User.query.filter_by(username=session.get('username')).first()
+        new_expense = Expense(
+            description=description, 
+            amount=amount, 
+            date=datetime.now(),
+            user_id=current_user.id if current_user else None
+        )
         db.session.add(new_expense)
         db.session.commit()
         return redirect(url_for('dashboard'))
