@@ -363,4 +363,6 @@ def healthz():
         return {'status': 'error', 'error': str(e)}, 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Debug mode - only for local development
+    # In production, use gunicorn instead (see Dockerfile)
+    app.run(debug=True, host='0.0.0.0', port=5000)

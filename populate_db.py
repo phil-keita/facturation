@@ -1,3 +1,18 @@
+"""
+Database Population Script for Marate AI Financial Management System
+
+This script generates realistic test data for development and testing:
+- Creates 100+ receipts over 12 months with varied customers and amounts
+- Generates 70+ expenses with different categories
+- Useful for testing the dashboard, charts, and filtering features
+
+⚠️ WARNING: This script DELETES all existing receipts and expenses!
+Only use in development environments.
+
+Usage:
+    python populate_db.py
+"""
+
 from app import app, db
 from database import Receipt, Expense
 from datetime import datetime, timedelta

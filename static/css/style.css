@@ -1,11 +1,19 @@
+/* ========================================
+   Base Styles
+   ======================================== */
+
 body {
-  font-family: sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f8f9fa;
   margin: 0;
   padding: 0;
+  color: #333;
 }
 
-/* Main Menu Navigation */
+/* ========================================
+   Navigation
+   ======================================== */
+
 .main-menu {
   position: relative;
   text-align: center;
@@ -47,7 +55,6 @@ body {
   box-shadow: 0 4px 15px 0 rgba(0,188,212,0.4);
 }
 
-/* Profile Dropdown */
 .profile-menu {
   position: absolute;
   top: 50%;
@@ -137,13 +144,12 @@ body {
   outline: none;
 }
 
-.profile-dropdown .divider {
-  height: 1px;
-  background: #e5e5e5;
-  margin: 4px 0;
-}
 
-/* Form Container */
+
+/* ========================================
+   Forms
+   ======================================== */
+
 .form-wrapper {
   display: flex;
   justify-content: center;
@@ -239,7 +245,10 @@ button:active {
   transform: translateY(0);
 }
 
-/* Dashboard Styles */
+/* ========================================
+   Dashboard
+   ======================================== */
+
 .dashboard-container {
   max-width: 1200px;
   width: 100%;
@@ -265,7 +274,6 @@ button:active {
   margin-bottom: 2rem;
 }
 
-/* View Toggle */
 .view-toggle {
   display: flex;
   gap: 0;
@@ -416,6 +424,10 @@ button:active {
   display: block;
 }
 
+/* ========================================
+   Tables
+   ======================================== */
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -446,35 +458,12 @@ table tbody tr:hover {
   font-style: italic;
 }
 
-.nav-links {
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #ddd;
-}
+/* ========================================
+   Utility Classes
+   ======================================== */
 
-.nav-links a {
-  color: #00bcd4;
-  text-decoration: none;
-  margin: 0 1rem;
-  font-weight: 500;
-}
-
-.nav-links a:hover {
-  text-decoration: underline;
-}
-
-.nav-links .btn {
-  display: inline-block;
-  background: #00bcd4;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  text-decoration: none;
-  margin: 0.5rem;
-}
-
-.nav-links .btn:hover {
-  background: #0097a7;
-  text-decoration: none;
+.divider {
+  height: 1px;
+  background: #e5e5e5;
+  margin: 4px 0;
 }

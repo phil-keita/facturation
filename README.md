@@ -1,20 +1,31 @@
 # 💼 Système de Gestion Financière - Marate AI
 
-Une application web complète de gestion financière avec génération de reçus PDF, suivi des dépenses et tableau de bord analytique.
+Une application web complète de gestion financière multi-utilisateurs avec authentification, génération de reçus PDF, suivi des dépenses et tableau de bord analytique.
 
 ## 🎯 Aperçu
 
 Cette application Flask permet de:
+- **Authentification sécurisée** avec gestion multi-utilisateurs
 - **Générer des reçus PDF** professionnels téléchargeables avec numérotation automatique
 - **Suivre et enregistrer les dépenses** pour une gestion financière complète
 - **Visualiser les finances** avec un tableau de bord interactif et des graphiques
 - **Analyser les revenus** mensuels et le revenu net avec Chart.js
 - **Gérer les paiements** récurrents et uniques avec descriptions automatiques
+- **Vue personnelle vs entreprise** pour analyser vos données ou celles de l'équipe
 
 ## ✨ Fonctionnalités Principales
 
+### 🔐 Authentification & Gestion Utilisateurs
+- Connexion sécurisée avec hashage des mots de passe
+- Compte administrateur avec interface de gestion
+- Création et suppression d'utilisateurs
+- Modification du nom d'utilisateur et mot de passe
+- Menu profil avec avatar
+- Protection du compte admin
+
 ### 📝 Génération de Reçus
 - Numéro de reçu automatique et unique
+- Association automatique à l'utilisateur connecté
 - Deux types de paiement :
   - **Récurrent mensuel** : Description automatique "Paiement mensuel récurrent"
   - **Unique** : Champ personnalisable pour la raison du paiement
@@ -26,10 +37,13 @@ Cette application Flask permet de:
 ### 💸 Gestion des Dépenses
 - Enregistrement rapide avec description et montant
 - Date automatique d'enregistrement
+- Association automatique à l'utilisateur connecté
 - Historique complet accessible depuis le tableau de bord
 - Calcul automatique du total des dépenses
 
 ### 📊 Tableau de Bord Analytique
+- **Vue personnelle** : Visualisez uniquement vos propres données
+- **Vue entreprise** : Analysez les données agrégées de toute l'équipe (sans exposition des utilisateurs individuels)
 - **Cartes récapitulatives compactes** :
   - Revenu Total (FCFA)
   - Dépenses Totales (FCFA)
@@ -42,27 +56,37 @@ Cette application Flask permet de:
   - 10 derniers reçus
   - 10 dernières dépenses
 - **Design responsive** : S'adapte aux écrans desktop et mobile
+- **Interface moderne** : Design épuré avec dégradés cyan, animations et effets glossy
 
 ## 🧱 Technologies
 
 - **Backend** : Flask 3.1.2
-- **Base de données** : SQLite + Flask-SQLAlchemy 3.1.1
+- **Base de données** : SQLite (dev) / PostgreSQL 16 (production) + Flask-SQLAlchemy 3.1.1
+- **Authentification** : Werkzeug password hashing, Flask sessions
 - **Génération PDF** : WeasyPrint
 - **Graphiques** : Chart.js
-- **Frontend** : HTML5, CSS3, JavaScript
-- **Python** : 3.13+
+- **Icônes** : Font Awesome 6.4.0
+- **Frontend** : HTML5, CSS3 (responsive design), JavaScript
+- **Déploiement** : Docker + Docker Compose, Caddy (reverse proxy avec HTTPS automatique)
+- **Python** : 3.11+
 
 ## 📂 Structure du Projet
 
 ```
 facturation/
-├── app.py                    # Application Flask avec routes
-├── database.py               # Modèles SQLAlchemy (Receipt, Expense)
+├── app.py                    # Application Flask avec routes et authentification
+├── database.py               # Modèles SQLAlchemy (User, Receipt, Expense)
 ├── populate_db.py            # Script de génération de données de test
 ├── requirements.txt          # Dépendances Python
 ├── .gitignore               # Fichiers à ignorer par Git
+├── Dockerfile               # Configuration Docker
+├── docker-compose.yml       # Orchestration Docker (app + PostgreSQL + Caddy)
+├── Caddyfile                # Configuration Caddy pour HTTPS automatique
 │
 ├── templates/
+│   ├── login.html           # Page de connexion
+│   ├── admin.html           # Interface de gestion des utilisateurs
+│   ├── account.html         # Page de profil utilisateur
 │   ├── form.html            # Formulaire de génération de reçu
 │   ├── add_expense.html     # Formulaire d'ajout de dépense
 │   ├── dashboard.html       # Tableau de bord avec graphiques
@@ -70,11 +94,17 @@ facturation/
 │
 ├── static/
 │   └── css/
-│       └── style.css        # Styles globaux
+│       ├── style.css        # Styles globaux et navigation
+│       ├── login.css        # Styles page de connexion
+│       ├── admin.css        # Styles page admin
+│       └── account.css      # Styles page compte
+│
+├── scripts/
+│   └── migrate_add_user_id.py # Script de migration base de données
 │
 ├── receipts/                # PDFs générés (créé automatiquement)
 └── instance/
-    └── data.db             # Base de données SQLite (créée automatiquement)
+    └── data.db             # Base de données SQLite (créée automatiquement en dev)
 ```
 
 ## 🚀 Installation Rapide
@@ -126,11 +156,34 @@ python app.py
 
 L'application démarre sur **http://localhost:5000**
 
+### 6. Connexion Initiale
+
+Lors du premier lancement, un compte administrateur est créé automatiquement :
+- **Nom d'utilisateur** : `admin`
+- **Mot de passe** : `admin`
+
+⚠️ **Important** : Changez le mot de passe admin dès votre première connexion depuis la page "Mon compte"
+
 ## 📖 Guide d'Utilisation
+
+### Première Connexion
+
+1. Aller sur http://localhost:5000
+2. Connexion avec les identifiants admin par défaut :
+   - Nom d'utilisateur : `admin`
+   - Mot de passe : `admin`
+3. Changer immédiatement le mot de passe depuis "Mon compte"
+
+### Gérer les Utilisateurs (Admin)
+
+1. Cliquer sur votre profil → **Gérer les utilisateurs**
+2. Créer de nouveaux utilisateurs avec nom d'utilisateur et mot de passe
+3. Les utilisateurs créés peuvent se connecter et gérer leurs propres données
+4. Supprimer des utilisateurs (sauf le compte admin protégé)
 
 ### Générer un Reçu
 
-1. Aller sur http://localhost:5000
+1. Cliquer sur **Reçu** dans le menu
 2. Remplir le formulaire :
    - **Nom du Client** : Nom complet ou entreprise
    - **Type de Paiement** : Récurrent ou Unique
@@ -138,20 +191,30 @@ L'application démarre sur **http://localhost:5000**
    - **Prix (FCFA)** : Montant numérique
    - **Montant en Lettres** : Montant écrit en toutes lettres
 3. Cliquer sur **Générer PDF**
-4. Le reçu se télécharge automatiquement
+4. Le reçu se télécharge automatiquement et est associé à votre compte
 
 ### Enregistrer une Dépense
 
 1. Cliquer sur **Dépense** dans le menu
 2. Entrer la description et le montant
-3. Cliquer sur **Enregistrer la Dépense**
-4. Redirection automatique vers le tableau de bord
+3. Cliquer sur **Ajouter Dépense**
+4. La dépense est enregistrée et associée à votre compte
+5. Redirection automatique vers le tableau de bord
 
 ### Consulter le Tableau de Bord
 
 1. Cliquer sur **Tableau de bord** dans le menu
-2. Visualiser les cartes récapitulatives et les graphiques
-3. Consulter les tableaux de transactions récentes
+2. Choisir votre vue :
+   - **Mes Données** : Vos reçus et dépenses uniquement
+   - **Entreprise** : Données agrégées de toute l'équipe
+3. Visualiser les cartes récapitulatives et les graphiques
+4. Consulter les tableaux de transactions récentes
+
+### Gérer votre Compte
+
+1. Cliquer sur votre profil → **Mon compte**
+2. Modifier votre nom d'utilisateur
+3. Changer votre mot de passe (mot de passe actuel requis)
 
 ### (Optionnel) Générer des Données de Test
 
@@ -184,15 +247,21 @@ Chaque reçu contient :
 
 ## 📊 Base de Données
 
-SQLite avec deux tables :
+SQLite (développement) / PostgreSQL (production) avec trois tables :
+
+**User (Utilisateurs)**
+- `id`, `username` (unique), `password_hash`
+- `created_at`
 
 **Receipt (Reçus)**
 - `id`, `receipt_number`, `customer_name`
 - `description`, `payment_type`, `payment_reason`
 - `price`, `amount_in_letters`, `date`
+- `user_id` (foreign key vers User)
 
 **Expense (Dépenses)**
 - `id`, `description`, `amount`, `date`
+- `user_id` (foreign key vers User)
 
 ## 🎨 Personnalisation
 
@@ -207,30 +276,54 @@ Modifier `templates/receipt_template.html` pour ajouter logo, champs personnalis
 
 ## 🔒 Notes de Production
 
-⚠️ Cette application est conçue pour le développement local.
+✅ L'application inclut déjà :
+- **Authentification sécurisée** avec hashage des mots de passe
+- **PostgreSQL** en production via Docker
+- **HTTPS automatique** avec Caddy
+- **Gunicorn** comme serveur WSGI
+- **Variables d'environnement** pour les secrets
+- **Docker Compose** pour orchestration
 
-Pour la production, considérer :
-- PostgreSQL/MySQL au lieu de SQLite
-- Authentification utilisateur (Flask-Login)
-- HTTPS/SSL
-- Serveur WSGI (Gunicorn)
-- Variables d'environnement pour les secrets
-- Sauvegardes automatiques
-- Rate limiting
+⚠️ Recommandations supplémentaires :
+- Changez le mot de passe admin par défaut
+- Configurez des sauvegardes automatiques de la base de données
+- Ajoutez du rate limiting pour les endpoints sensibles
+- Configurez des logs centralisés
+- Mettez en place une surveillance (monitoring)
+
+Voir `README-deploy-vps.md` pour le guide de déploiement complet sur VPS.
 
 ## 🚀 Déploiement
 
-Compatibilité :
+### Déploiement Docker (Recommandé)
+
+L'application est prête pour le déploiement avec Docker :
+
+```bash
+# Configuration des variables d'environnement
+cp .env.sample .env
+# Éditer .env avec vos valeurs
+
+# Lancer avec Docker Compose
+docker-compose up -d
+```
+
+### Plateforme Compatible
+
+- **VPS** (Ubuntu/Debian) avec Docker - Configuration incluse
 - Render
 - Railway  
-- PythonAnywhere
-- Heroku
 - DigitalOcean App Platform
-- VPS avec Nginx + Gunicorn
+- AWS / GCP / Azure
+
+Voir `README-deploy-vps.md` pour un guide détaillé de déploiement sur VPS.
 
 ## 🔮 Améliorations Futures
 
-- [ ] Authentification multi-utilisateurs
+- [x] Authentification multi-utilisateurs
+- [x] Gestion des utilisateurs (admin)
+- [x] Vue personnelle vs entreprise
+- [x] Design moderne et responsive
 - [ ] Export Excel/CSV
 - [ ] Envoi automatique par email
 - [ ] Factures multi-lignes
@@ -242,6 +335,8 @@ Compatibilité :
 - [ ] Catégorisation des dépenses
 - [ ] Mode sombre
 - [ ] Application mobile
+- [ ] Notifications en temps réel
+- [ ] Permissions et rôles avancés
 
 ## 🤝 Contribution
 
@@ -254,6 +349,20 @@ Les contributions sont bienvenues !
 5. Ouvrir une Pull Request
 
 ## 📝 Changelog
+
+**v3.0** (Novembre 2025)
+- 🔐 Authentification multi-utilisateurs sécurisée
+- 👥 Interface d'administration des utilisateurs
+- 👤 Gestion de profil utilisateur
+- 📊 Vue personnelle vs entreprise sur le tableau de bord
+- 🗄️ Support PostgreSQL en production
+- 🐳 Déploiement Docker avec Caddy
+- 🎨 Design moderne avec effets glossy et animations
+- 📱 Interface entièrement responsive
+- 🇫🇷 Interface 100% en français
+- 🔗 Association automatique utilisateur-données
+- 🛡️ Protection du compte administrateur
+- 📁 Architecture CSS modulaire (fichiers séparés par page)
 
 **v2.0** (Octobre 2025)
 - ✨ Système de gestion des dépenses
@@ -278,8 +387,17 @@ MIT License - Usage libre personnel et commercial
 
 **Philippe Keita**  
 Marate AI  
-Octobre 2025
+Novembre 2025
 
 ---
 
 **Made with ❤️ for Marate AI**
+
+## 📸 Captures d'écran
+
+- Page de connexion sécurisée avec design moderne
+- Tableau de bord avec vue personnelle/entreprise
+- Interface d'administration des utilisateurs
+- Formulaires de génération de reçus et dépenses
+- Graphiques interactifs avec Chart.js
+- Menu profil avec gestion de compte
