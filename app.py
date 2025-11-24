@@ -67,7 +67,7 @@ def login():
                 return redirect(url_for('admin'))
             return redirect(url_for('index'))
         else:
-            flash('Invalid credentials', 'danger')
+            flash('Identifiants invalides', 'danger')
             return render_template('login.html', next=next_url), 401
     return render_template('login.html', next=next_url)
 
@@ -90,15 +90,15 @@ def admin():
         if user and check_password_hash(user.password_hash, password):
             session['logged_in'] = True
             session['username'] = username
-            flash('Logged in successfully.', 'success')
+            flash('Connexion réussie.', 'success')
             # Only allow admin user onto the admin UI
             if username != 'admin':
-                flash('Admin access required', 'danger')
+                flash('Accès administrateur requis', 'danger')
                 return redirect(url_for('index'))
             # Redirect after successful login to avoid treating this POST as a create-user action
             return redirect(url_for('admin'))
         else:
-            flash('Invalid credentials', 'danger')
+            flash('Identifiants invalides', 'danger')
             # fall through to render login form again (still at /admin)
 
     # If the user is not logged in or not admin, show login form (but keep URL /admin)
@@ -111,15 +111,15 @@ def admin():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         if not username or not password:
-            flash('Username and password are required', 'danger')
+            flash('Le nom d\'utilisateur et le mot de passe sont requis', 'danger')
         else:
             if User.query.filter_by(username=username).first():
-                flash('User already exists', 'danger')
+                flash('L\'utilisateur existe déjà', 'danger')
             else:
                 new_user = User(username=username, password_hash=generate_password_hash(password))
                 db.session.add(new_user)
                 db.session.commit()
-                flash(f'User {username} created', 'success')
+                flash(f'Utilisateur {username} créé', 'success')
 
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template('admin.html', users=users)
@@ -130,26 +130,26 @@ def admin():
 def admin_delete():
     # Only admin username may perform deletions
     if session.get('username') != 'admin':
-        flash('Admin access required', 'danger')
+        flash('Accès administrateur requis', 'danger')
         return redirect(url_for('index'))
 
     user_id = request.form.get('user_id')
     if not user_id:
-        flash('Missing user id', 'danger')
+        flash('ID utilisateur manquant', 'danger')
         return redirect(url_for('admin'))
 
     user = User.query.get(user_id)
     if not user:
-        flash('User not found', 'danger')
+        flash('Utilisateur introuvable', 'danger')
         return redirect(url_for('admin'))
 
     if user.username == 'admin':
-        flash('Cannot delete the admin account', 'danger')
+        flash('Impossible de supprimer le compte administrateur', 'danger')
         return redirect(url_for('admin'))
 
     db.session.delete(user)
     db.session.commit()
-    flash(f'User {user.username} deleted', 'success')
+    flash(f'Utilisateur {user.username} supprimé', 'success')
     return redirect(url_for('admin'))
 
 
@@ -158,7 +158,7 @@ def admin_delete():
 def account():
     user = User.query.filter_by(username=session.get('username')).first()
     if not user:
-        flash('User not found', 'danger')
+        flash('Utilisateur introuvable', 'danger')
         return redirect(url_for('logout'))
 
     if request.method == 'POST':
@@ -167,14 +167,14 @@ def account():
         if action == 'update_username':
             new_username = request.form.get('new_username', '').strip()
             if not new_username:
-                flash('Username cannot be empty', 'danger')
+                flash('Le nom d\'utilisateur ne peut pas être vide', 'danger')
             elif new_username != user.username and User.query.filter_by(username=new_username).first():
-                flash('Username already taken', 'danger')
+                flash('Nom d\'utilisateur déjà utilisé', 'danger')
             else:
                 user.username = new_username
                 session['username'] = new_username
                 db.session.commit()
-                flash('Username updated successfully', 'success')
+                flash('Nom d\'utilisateur mis à jour avec succès', 'success')
         
         elif action == 'update_password':
             current_password = request.form.get('current_password', '')
@@ -182,15 +182,15 @@ def account():
             confirm_password = request.form.get('confirm_password', '')
             
             if not check_password_hash(user.password_hash, current_password):
-                flash('Current password is incorrect', 'danger')
+                flash('Le mot de passe actuel est incorrect', 'danger')
             elif not new_password or len(new_password) < 4:
-                flash('New password must be at least 4 characters', 'danger')
+                flash('Le nouveau mot de passe doit contenir au moins 4 caractères', 'danger')
             elif new_password != confirm_password:
-                flash('New passwords do not match', 'danger')
+                flash('Les nouveaux mots de passe ne correspondent pas', 'danger')
             else:
                 user.password_hash = generate_password_hash(new_password)
                 db.session.commit()
-                flash('Password updated successfully', 'success')
+                flash('Mot de passe mis à jour avec succès', 'success')
         
         return redirect(url_for('account'))
     
@@ -267,7 +267,7 @@ def generate_receipt():
     except Exception as e:
         # Log to console for developer visibility and return HTML fallback
         print("WeasyPrint PDF generation failed:", e)
-        flash('PDF generation is not available in this environment. Showing HTML fallback.', 'warning')
+        flash('La génération PDF n\'est pas disponible dans cet environnement. Affichage HTML de secours.', 'warning')
         return html, 200, {'Content-Type': 'text/html'}
 
 @app.route('/expenses', methods=['GET', 'POST'])
@@ -291,14 +291,36 @@ def add_expense():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Get current user
+    current_user = User.query.filter_by(username=session.get('username')).first()
+    
+    # Check if user wants to see company-wide data (default to personal)
+    view_mode = request.args.get('view', 'personal')  # 'personal' or 'company'
+    
+    # Build queries based on view mode
+    if view_mode == 'company':
+        # Company-wide data (no user filter)
+        receipts_query = Receipt.query
+        expenses_query = Expense.query
+    else:
+        # Personal data only (filter by current user)
+        receipts_query = Receipt.query.filter_by(user_id=current_user.id if current_user else None)
+        expenses_query = Expense.query.filter_by(user_id=current_user.id if current_user else None)
+    
     # Totals
-    total_income = db.session.query(func.sum(Receipt.price)).scalar() or 0
-    total_expenses = db.session.query(func.sum(Expense.amount)).scalar() or 0
+    total_income = db.session.query(func.sum(Receipt.price)).filter(
+        Receipt.user_id == current_user.id if view_mode == 'personal' and current_user else True
+    ).scalar() or 0
+    
+    total_expenses = db.session.query(func.sum(Expense.amount)).filter(
+        Expense.user_id == current_user.id if view_mode == 'personal' and current_user else True
+    ).scalar() or 0
+    
     net_income = total_income - total_expenses
 
-    # Dialect-neutral monthly aggregation (group in Python for simplicity and portability)
-    receipts = db.session.query(Receipt.date, Receipt.price).all()
-    expenses_rows = db.session.query(Expense.date, Expense.amount).all()
+    # Dialect-neutral monthly aggregation
+    receipts = receipts_query.with_entities(Receipt.date, Receipt.price).all()
+    expenses_rows = expenses_query.with_entities(Expense.date, Expense.amount).all()
 
     income_by_month = {}
     for dt, price in receipts:
@@ -314,11 +336,11 @@ def dashboard():
     monthly_income_data = [(m, income_by_month.get(m, 0)) for m in all_months]
     monthly_net_data = [(m, income_by_month.get(m, 0) - expenses_by_month.get(m, 0)) for m in all_months]
     
-    # Recent receipts
-    recent_receipts = Receipt.query.order_by(Receipt.date.desc()).limit(10).all()
+    # Recent receipts (don't show user info to maintain privacy)
+    recent_receipts = receipts_query.order_by(Receipt.date.desc()).limit(10).all()
     
-    # Recent expenses
-    recent_expenses = Expense.query.order_by(Expense.date.desc()).limit(10).all()
+    # Recent expenses (don't show user info to maintain privacy)
+    recent_expenses = expenses_query.order_by(Expense.date.desc()).limit(10).all()
 
     return render_template(
         'dashboard.html',
@@ -328,7 +350,8 @@ def dashboard():
         monthly_income_data=monthly_income_data,
         monthly_net_data=monthly_net_data,
         recent_receipts=recent_receipts,
-        recent_expenses=recent_expenses
+        recent_expenses=recent_expenses,
+        view_mode=view_mode
     )
 
 @app.route('/healthz')

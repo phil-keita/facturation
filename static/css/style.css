@@ -265,6 +265,48 @@ button:active {
   margin-bottom: 2rem;
 }
 
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 0;
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.toggle-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #555;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover {
+  color: #00bcd4;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,188,212,0.3);
+}
+
+@media (max-width: 640px) {
+  .view-toggle {
+    padding: 3px;
+  }
+  
+  .toggle-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

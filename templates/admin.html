@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin - Users</title>
+    <title>Admin - Utilisateurs</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -81,14 +81,14 @@
           <div class="divider"></div>
           <a href="/account">Mon compte</a>
           <div class="divider"></div>
-          <a href="/logout">Logout</a>
+          <a href="/logout">Déconnexion</a>
         </div>
       </div>
     </nav>
 
     <div class="admin-page">
       <div class="admin-header">
-        <h1>User Management</h1>
+        <h1>Gestion des Utilisateurs</h1>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -102,25 +102,25 @@
       {% endwith %}
 
       <div class="admin-section">
-        <h2>Add New User</h2>
+        <h2>Ajouter un Utilisateur</h2>
         <form method="post" class="admin-form" autocomplete="off" onsubmit="return validatePasswords()">
           <div class="form-group">
-            <label for="username">Username</label>
-            <input name="username" id="username" placeholder="Enter username" required>
+            <label for="username">Nom d'utilisateur</label>
+            <input name="username" id="username" placeholder="Entrez le nom d'utilisateur" required>
           </div>
           <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password">Mot de passe</label>
             <div class="input-wrapper">
-              <input name="password" id="password" type="password" placeholder="Enter password" required>
+              <input name="password" id="password" type="password" placeholder="Entrez le mot de passe" required>
               <span class="password-toggle" onclick="togglePasswordField('password', this)">
                 <i class="fa-regular fa-eye"></i>
               </span>
             </div>
           </div>
           <div class="form-group">
-            <label for="confirm_password">Confirm Password</label>
+            <label for="confirm_password">Confirmer le mot de passe</label>
             <div class="input-wrapper">
-              <input name="confirm_password" id="confirm_password" type="password" placeholder="Confirm password" required>
+              <input name="confirm_password" id="confirm_password" type="password" placeholder="Confirmez le mot de passe" required>
               <span class="password-toggle" onclick="togglePasswordField('confirm_password', this)">
                 <i class="fa-regular fa-eye"></i>
               </span>
@@ -128,7 +128,7 @@
           </div>
           <div class="form-group">
             <label>&nbsp;</label>
-            <button class="btn" type="submit">Add User</button>
+            <button class="btn" type="submit">Ajouter l'utilisateur</button>
           </div>
         </form>
         <script>
@@ -136,7 +136,7 @@
             const password = document.getElementById('password').value;
             const confirm = document.getElementById('confirm_password').value;
             if (password !== confirm) {
-              alert('Passwords do not match!');
+              alert('Les mots de passe ne correspondent pas!');
               return false;
             }
             return true;
@@ -157,13 +157,13 @@
       </div>
 
       <div class="admin-section">
-        <h2>All Users</h2>
+        <h2>Tous les Utilisateurs</h2>
         <div class="admin-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Username</th>
-                <th>Created At</th>
+                <th>Nom d'utilisateur</th>
+                <th>Créé le</th>
                 <th style="width: 120px; text-align: center;">Actions</th>
               </tr>
             </thead>
@@ -176,10 +176,10 @@
                   {% if u.username != 'admin' %}
                   <form method="post" action="{{ url_for('admin_delete') }}" style="display:inline">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <button class="btn btn-danger" type="submit" onclick="return confirm('Delete user {{ u.username }}?')">Delete</button>
+                    <button class="btn btn-danger" type="submit" onclick="return confirm('Supprimer l\'utilisateur {{ u.username }}?')">Supprimer</button>
                   </form>
                   {% else %}
-                    <span style="opacity:0.5; font-size:0.85rem;">Protected</span>
+                    <span style="opacity:0.5; font-size:0.85rem;">Protégé</span>
                   {% endif %}
                 </td>
               </tr>
@@ -187,7 +187,7 @@
             </tbody>
           </table>
         </div>
-        <p class="user-count">Total users: {{ users|length }}</p>
+        <p class="user-count">Total des utilisateurs: {{ users|length }}</p>
       </div>
     </div>
   </body>

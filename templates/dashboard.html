@@ -25,12 +25,20 @@
         {% endif %}
         <a href="/account">Mon compte</a>
         <div class="divider"></div>
-        <a href="/logout">Logout</a>
+        <a href="/logout">Déconnexion</a>
       </div>
     </div>
   </nav>
   
   <div class="dashboard-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="margin: 0;">Tableau de Bord</h1>
+      <div class="view-toggle">
+        <a href="/dashboard?view=personal" class="toggle-btn {% if view_mode == 'personal' %}active{% endif %}">Mes Données</a>
+        <a href="/dashboard?view=company" class="toggle-btn {% if view_mode == 'company' %}active{% endif %}">Entreprise</a>
+      </div>
+    </div>
+
     <div class="summary-cards">
       <div class="card income">
         <h3>Revenu Total</h3>
