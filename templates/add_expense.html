@@ -11,6 +11,22 @@
     <a href="/">Reçu</a>
     <a href="/expenses" class="active">Dépense</a>
     <a href="/dashboard">Tableau de bord</a>
+    
+    <div class="profile-menu">
+      <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <div class="profile-dropdown">
+        {% if session.username == 'admin' %}
+        <a href="/admin">Gérer les utilisateurs</a>
+        <div class="divider"></div>
+        {% endif %}
+        <a href="/account">Mon compte</a>
+        <div class="divider"></div>
+        <a href="/logout">Déconnexion</a>
+      </div>
+    </div>
   </nav>
   
   <div class="form-wrapper">

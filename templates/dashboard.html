@@ -12,9 +12,33 @@
     <a href="/">Reçu</a>
     <a href="/expenses">Dépense</a>
     <a href="/dashboard" class="active">Tableau de bord</a>
+    
+    <div class="profile-menu">
+      <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <div class="profile-dropdown">
+        {% if session.username == 'admin' %}
+        <a href="/admin">Gérer les utilisateurs</a>
+        <div class="divider"></div>
+        {% endif %}
+        <a href="/account">Mon compte</a>
+        <div class="divider"></div>
+        <a href="/logout">Déconnexion</a>
+      </div>
+    </div>
   </nav>
   
   <div class="dashboard-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="margin: 0;">Tableau de Bord</h1>
+      <div class="view-toggle">
+        <a href="/dashboard?view=personal" class="toggle-btn {% if view_mode == 'personal' %}active{% endif %}">Mes Données</a>
+        <a href="/dashboard?view=company" class="toggle-btn {% if view_mode == 'company' %}active{% endif %}">Entreprise</a>
+      </div>
+    </div>
+
     <div class="summary-cards">
       <div class="card income">
         <h3>Revenu Total</h3>

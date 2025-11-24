@@ -1,0 +1,30 @@
+# Copy this file's contents into: C:\Users\keita\.ssh\config
+# Adjust HostName, User, and domain as needed.
+# Each 'Host' block defines a shortcut. After saving, you can: ssh facturation-prod
+
+Host facturation-prod
+  HostName YOUR.SERVER.IP.OR.DOMAIN
+  User root
+  IdentityFile C:/Users/keita/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ServerAliveInterval 30
+  ServerAliveCountMax 4
+  Compression yes
+  ForwardAgent no
+
+# After creating non-root user (recommended):
+Host facturation-app
+  HostName YOUR.SERVER.IP.OR.DOMAIN
+  User appadmin
+  IdentityFile C:/Users/keita/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ServerAliveInterval 30
+  ServerAliveCountMax 4
+  Compression yes
+  ForwardAgent no
+
+# Optional: enable agent forwarding if you need to pull private repos from VPS
+# ForwardAgent yes
+
+# StrictHostKeyChecking can be set to ask (default). Avoid 'no' for security.
+# To refresh a changed host key, manually remove the old line from C:/Users/keita/.ssh/known_hosts.

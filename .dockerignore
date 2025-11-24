@@ -1,0 +1,36 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Environment & Config
+.env
+.env.*
+.env.sample
+
+# Generated files
+receipts/*.pdf
+instance/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Documentation
+README*.md
+ssh-config-example.txt

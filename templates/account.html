@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Compte</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <nav class="main-menu">
+    <a href="/">Reçu</a>
+    <a href="/expenses">Dépense</a>
+    <a href="/dashboard">Tableau de bord</a>
+    
+    <div class="profile-menu">
+      <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <div class="profile-dropdown">
+        {% if session.username == 'admin' %}
+        <a href="/admin">Gérer les utilisateurs</a>
+        <div class="divider"></div>
+        {% endif %}
+        <a href="/account">Mon compte</a>
+        <div class="divider"></div>
+        <a href="/logout">Déconnexion</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="account-page">
+    <div class="account-header">
+      <h1>Mon Compte</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages">
+        {% for category, msg in messages %}
+          <li class="{{ category }}">{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <div class="account-section">
+      <h2>Changer le nom d'utilisateur</h2>
+      <form method="post" action="{{ url_for('account') }}">
+        <input type="hidden" name="action" value="update_username">
+        <div class="form-group">
+          <label for="new_username">Nouveau nom d'utilisateur</label>
+          <input type="text" name="new_username" id="new_username" value="{{ user.username }}" required>
+        </div>
+        <button type="submit" class="btn">Mettre à jour le nom d'utilisateur</button>
+      </form>
+    </div>
+
+    <div class="account-section">
+      <h2>Changer le mot de passe</h2>
+      <form method="post" action="{{ url_for('account') }}">
+        <input type="hidden" name="action" value="update_password">
+        <div class="form-group">
+          <label for="current_password">Mot de passe actuel</label>
+          <div class="input-wrapper">
+            <input type="password" name="current_password" id="current_password" required>
+            <span class="password-toggle" onclick="togglePasswordField('current_password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="new_password">Nouveau mot de passe</label>
+          <div class="input-wrapper">
+            <input type="password" name="new_password" id="new_password" required>
+            <span class="password-toggle" onclick="togglePasswordField('new_password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </span>
+          </div>
+          <p class="info-text">Au moins 4 caractères</p>
+        </div>
+        <div class="form-group">
+          <label for="confirm_password">Confirmer le nouveau mot de passe</label>
+          <div class="input-wrapper">
+            <input type="password" name="confirm_password" id="confirm_password" required>
+            <span class="password-toggle" onclick="togglePasswordField('confirm_password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </span>
+          </div>
+        </div>
+        <button type="submit" class="btn">Mettre à jour le mot de passe</button>
+      </form>
+    </div>
+  </div>
+  <script>
+    function togglePasswordField(fieldId, toggleIcon) {
+      const input = document.getElementById(fieldId);
+      const icon = toggleIcon.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
+    }
+  </script>
+</body>
+</html>

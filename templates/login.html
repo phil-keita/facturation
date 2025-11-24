@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connexion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body>
+    <div class="login">
+      <h1>Connexion</h1>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="flash-messages">
+          {% for category, msg in messages %}
+            <li class="{{ category }}">{{ msg }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ action_url or url_for('login') }}">
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="form-group">
+          <label>Nom d'utilisateur</label>
+          <input name="username" class="form-control" required autofocus>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <div class="input-wrapper">
+            <input type="password" name="password" id="password" class="form-control" required>
+            <span class="password-toggle" onclick="togglePassword()">
+              <i class="fa-regular fa-eye" id="eye-icon"></i>
+            </span>
+          </div>
+        </div>
+        <div class="form-group">
+          <button class="btn" type="submit">Se connecter</button>
+        </div>
+      </form>
+    </div>
+    <script>
+      function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.getElementById('eye-icon');
+        if (input.type === 'password') {
+          input.type = 'text';
+          icon.className = 'fa-regular fa-eye-slash';
+        } else {
+          input.type = 'password';
+          icon.className = 'fa-regular fa-eye';
+        }
+      }
+    </script>
+  </body>
+</html>
