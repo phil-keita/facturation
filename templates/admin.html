@@ -10,9 +10,17 @@
   </head>
   <body>
     <nav class="main-menu">
-      <a href="/">Reçu</a>
-      <a href="/expenses">Dépense</a>
-      <a href="/dashboard">Tableau de bord</a>
+      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      
+      <div class="nav-links">
+        <a href="/">Reçu</a>
+        <a href="/expenses">Dépense</a>
+        <a href="/dashboard">Tableau de bord</a>
+      </div>
       
       <div class="profile-menu">
         <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
@@ -20,14 +28,49 @@
           <span class="profile-name">{{ session.username }}</span>
         </div>
         <div class="profile-dropdown">
-          <a href="/">Tableau de bord</a>
-          <div class="divider"></div>
+          {% if session.username == 'admin' %}
+          <a href="/admin">Gérer les utilisateurs</a>
+          {% endif %}
           <a href="/account">Mon compte</a>
-          <div class="divider"></div>
           <a href="/logout">Déconnexion</a>
         </div>
       </div>
     </nav>
+    
+    <div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+    <div class="mobile-menu">
+      <div class="mobile-menu-header">
+        <div class="profile-info">
+          <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+          <span class="profile-name">{{ session.username }}</span>
+        </div>
+        <button class="close-menu" onclick="closeMobileMenu()" aria-label="Fermer">&times;</button>
+      </div>
+      <div class="mobile-menu-links">
+        <a href="/">Reçu</a>
+        <a href="/expenses">Dépense</a>
+        <a href="/dashboard">Tableau de bord</a>
+        {% if session.username == 'admin' %}
+        <a href="/admin">Gérer les utilisateurs</a>
+        {% endif %}
+        <a href="/account">Mon compte</a>
+        <a href="/logout">Déconnexion</a>
+      </div>
+    </div>
+    
+    <script>
+      function toggleMobileMenu() {
+        document.querySelector('.mobile-menu').classList.toggle('active');
+        document.querySelector('.mobile-overlay').classList.toggle('active');
+        document.body.style.overflow = document.querySelector('.mobile-menu').classList.contains('active') ? 'hidden' : '';
+      }
+      
+      function closeMobileMenu() {
+        document.querySelector('.mobile-menu').classList.remove('active');
+        document.querySelector('.mobile-overlay').classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    </script>
 
     <div class="admin-page">
       <div class="admin-header">
@@ -47,32 +90,26 @@
       <div class="admin-section">
         <h2>Ajouter un Utilisateur</h2>
         <form method="post" class="admin-form" autocomplete="off" onsubmit="return validatePasswords()">
-          <div class="form-group">
-            <label for="username">Nom d'utilisateur</label>
-            <input name="username" id="username" placeholder="Entrez le nom d'utilisateur" required>
-          </div>
-          <div class="form-group">
-            <label for="password">Mot de passe</label>
-            <div class="input-wrapper">
-              <input name="password" id="password" type="password" placeholder="Entrez le mot de passe" required>
-              <span class="password-toggle" onclick="togglePasswordField('password', this)">
-                <i class="fa-regular fa-eye"></i>
-              </span>
+            <div class="form-group">
+              <input name="username" id="username" placeholder="Entrez le nom d'utilisateur" required>
             </div>
-          </div>
-          <div class="form-group">
-            <label for="confirm_password">Confirmer le mot de passe</label>
-            <div class="input-wrapper">
-              <input name="confirm_password" id="confirm_password" type="password" placeholder="Confirmez le mot de passe" required>
-              <span class="password-toggle" onclick="togglePasswordField('confirm_password', this)">
-                <i class="fa-regular fa-eye"></i>
-              </span>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <input name="password" id="password" type="password" placeholder="Entrez le mot de passe" required>
+                <span class="password-toggle" onclick="togglePasswordField('password', this)">
+                  <i class="fa-regular fa-eye"></i>
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label>&nbsp;</label>
-            <button class="btn" type="submit">Ajouter l'utilisateur</button>
-          </div>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <input name="confirm_password" id="confirm_password" type="password" placeholder="Confirmez le mot de passe" required>
+                <span class="password-toggle" onclick="togglePasswordField('confirm_password', this)">
+                  <i class="fa-regular fa-eye"></i>
+                </span>
+              </div>
+            </div>
+            <button class="btn-flat" type="submit">Ajouter l'utilisateur</button>
         </form>
         <script>
           function validatePasswords() {
@@ -117,9 +154,9 @@
                 <td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td style="text-align: center;">
                   {% if u.username != 'admin' %}
-                  <form method="post" action="{{ url_for('admin_delete') }}" style="display:inline">
+                  <form method="post" action="{{ url_for('admin_delete') }}" style="display:inline" onsubmit="return confirmDelete('{{ u.username }}')">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <button class="btn btn-danger" type="submit" onclick="return confirm('Supprimer l\'utilisateur {{ u.username }}?')">Supprimer</button>
+                    <button class="btn-flat-danger" type="submit">Supprimer</button>
                   </form>
                   {% else %}
                     <span style="opacity:0.5; font-size:0.85rem;">Protégé</span>
@@ -133,5 +170,94 @@
         <p class="user-count">Total des utilisateurs: {{ users|length }}</p>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="delete-modal-overlay" id="deleteModal">
+      <div class="delete-modal">
+        <h3>Confirmation de suppression</h3>
+        <p>Vous êtes sur le point de supprimer l'utilisateur <span class="username-highlight" id="deleteUsername"></span>.</p>
+        <p>Pour confirmer, veuillez taper le mot <strong>"supprimer"</strong> :</p>
+        <input type="text" id="deleteConfirmInput" placeholder="Tapez 'supprimer'">
+        <div class="delete-modal-actions">
+          <button type="button" class="delete-modal-cancel" onclick="closeDeleteModal()">Annuler</button>
+          <button type="button" class="delete-modal-confirm" id="confirmDeleteBtn" disabled onclick="submitDelete()">Supprimer</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Auto-hide flash messages after 5 seconds
+      setTimeout(function() {
+        const flashMessages = document.querySelector('.flash-messages');
+        if (flashMessages) {
+          flashMessages.style.transition = 'opacity 0.5s ease-out';
+          flashMessages.style.opacity = '0';
+          setTimeout(function() {
+            flashMessages.style.display = 'none';
+          }, 500);
+        }
+      }, 5000);
+
+      // Delete confirmation modal
+      let currentDeleteForm = null;
+
+      function confirmDelete(username) {
+        currentDeleteForm = event.target.closest('form');
+        document.getElementById('deleteUsername').textContent = username;
+        document.getElementById('deleteConfirmInput').value = '';
+        document.getElementById('confirmDeleteBtn').disabled = true;
+        document.getElementById('deleteModal').classList.add('active');
+        
+        // Focus on input after modal opens
+        setTimeout(() => {
+          document.getElementById('deleteConfirmInput').focus();
+        }, 100);
+        
+        return false; // Prevent form submission
+      }
+
+      function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+        currentDeleteForm = null;
+      }
+
+      function submitDelete() {
+        if (currentDeleteForm) {
+          currentDeleteForm.submit();
+        }
+        closeDeleteModal();
+      }
+
+      // Enable/disable confirm button based on input
+      document.getElementById('deleteConfirmInput').addEventListener('input', function(e) {
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        if (e.target.value.toLowerCase() === 'supprimer') {
+          confirmBtn.disabled = false;
+        } else {
+          confirmBtn.disabled = true;
+        }
+      });
+
+      // Allow Enter key to submit if input is correct
+      document.getElementById('deleteConfirmInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && e.target.value.toLowerCase() === 'supprimer') {
+          submitDelete();
+        }
+      });
+
+      // Close modal on overlay click
+      document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeDeleteModal();
+        }
+      });
+
+      // Close modal on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('deleteModal').classList.contains('active')) {
+          closeDeleteModal();
+        }
+      });
+    </script>
   </body>
 </html>
