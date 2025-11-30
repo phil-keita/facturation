@@ -1,20 +1,17 @@
-# Production Caddyfile for Marate AI Financial Management System
-# Replace 'facturation.marate.ai' with your actual domain
+marate.ai {
+    root * /marate-ai.github.io
+    file_server {
+        index index.html
+    }
+    encode gzip
+}
 
 facturation.marate.ai {
-    # Reverse proxy to Flask app running on port 8000
     reverse_proxy web:8000
-    
-    # Optional: Enable compression
     encode gzip
-    
-    # Optional: Security headers
     header {
-        # Enable HSTS
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        # Prevent clickjacking
         X-Frame-Options "DENY"
-        # Prevent MIME type sniffing
         X-Content-Type-Options "nosniff"
     }
 }
