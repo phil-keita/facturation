@@ -41,6 +41,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+      - /root/marate-ai.github.io:/marate-ai.github.io:ro
 
 volumes:
   pgdata:
