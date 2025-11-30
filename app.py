@@ -216,7 +216,7 @@ def generate_receipt():
         description = payment_reason if payment_reason else 'Paiement unique'
     
     price = float(request.form['price'])
-    amount_in_letters = request.form['amount_in_letters']
+    amount_in_letters = request.form.get('amount_in_letters', '').strip()
     date = datetime.now()
     
     # Generate receipt number (using timestamp for uniqueness)
@@ -225,7 +225,7 @@ def generate_receipt():
     # Get current user
     current_user = User.query.filter_by(username=session.get('username')).first()
     
-    # Save to database
+    # Save to database immediately
     new_receipt = Receipt(
         receipt_number=receipt_number,
         customer_name=name,
@@ -239,36 +239,59 @@ def generate_receipt():
     )
     db.session.add(new_receipt)
     db.session.commit()
+    
+    flash('Reçu créé avec succès!', 'success')
+    
+    # Redirect to preview page
+    return redirect(url_for('preview_receipt', receipt_id=new_receipt.id))
 
+
+@app.route('/receipt/preview/<int:receipt_id>')
+@login_required
+def preview_receipt(receipt_id):
+    receipt = Receipt.query.get_or_404(receipt_id)
+    return render_template('receipt_preview.html', receipt=receipt)
+
+
+@app.route('/receipt/download/<int:receipt_id>')
+@login_required
+def download_receipt(receipt_id):
+    receipt = Receipt.query.get_or_404(receipt_id)
+    
     # Render HTML receipt
     html = render_template('receipt_template.html', 
-                         name=name, 
-                         description=description, 
-                         price=price, 
-                         amount_in_letters=amount_in_letters,
-                         payment_type=payment_type,
-                         payment_reason=payment_reason,
-                         date=date.strftime("%Y-%m-%d %H:%M:%S"),
-                         receipt_number=receipt_number)
+                         name=receipt.customer_name, 
+                         description=receipt.description, 
+                         price=receipt.price, 
+                         amount_in_letters=receipt.amount_in_letters,
+                         payment_type=receipt.payment_type,
+                         payment_reason=receipt.payment_reason,
+                         date=receipt.date.strftime("%Y-%m-%d %H:%M:%S"),
+                         receipt_number=receipt.receipt_number)
 
     # Save and generate PDF
     if not os.path.exists('receipts'):
         os.makedirs('receipts')
 
-    filename = f"receipt_{name}_{int(datetime.now().timestamp())}.pdf"
+    filename = f"receipt_{receipt.customer_name}_{receipt.receipt_number}.pdf"
+    html_filename = f"receipt_{receipt.customer_name}_{receipt.receipt_number}.html"
     pdf_path = os.path.join('receipts', filename)
+    html_path = os.path.join('receipts', html_filename)
+    
     # Try to generate a PDF using WeasyPrint. If the native dependencies are
-    # missing (common on Windows), gracefully fall back to returning the
-    # rendered HTML so you can still test the UI without installing GTK.
+    # missing (common on Windows), gracefully fall back to downloading HTML
     try:
-        from weasyprint import HTML
-        HTML(string=html).write_pdf(pdf_path)
-        return send_file(pdf_path, as_attachment=True)
+        from weasyprint import HTML as WeasyHTML
+        WeasyHTML(string=html).write_pdf(pdf_path)
+        return send_file(pdf_path, as_attachment=True, download_name=filename)
     except Exception as e:
-        # Log to console for developer visibility and return HTML fallback
+        # Log to console for developer visibility and return HTML download as fallback
         print("WeasyPrint PDF generation failed:", e)
-        flash('La génération PDF n\'est pas disponible dans cet environnement. Affichage HTML de secours.', 'warning')
-        return html, 200, {'Content-Type': 'text/html'}
+        print("Falling back to HTML download")
+        # Save HTML to file and send as download
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html)
+        return send_file(html_path, as_attachment=True, download_name=html_filename)
 
 @app.route('/expenses', methods=['GET', 'POST'])
 @login_required
@@ -287,6 +310,80 @@ def add_expense():
         db.session.commit()
         return redirect(url_for('dashboard'))
     return render_template('add_expense.html')
+
+@app.route('/receipt/edit/<int:receipt_id>', methods=['GET', 'POST'])
+@login_required
+def edit_receipt(receipt_id):
+    # Only admin can edit
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    receipt = Receipt.query.get_or_404(receipt_id)
+    
+    if request.method == 'POST':
+        receipt.customer_name = request.form['name']
+        receipt.description = request.form.get('description', '')
+        receipt.price = float(request.form['price'])
+        receipt.amount_in_letters = request.form['amount_in_letters']
+        receipt.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+        db.session.commit()
+        flash('Reçu mis à jour avec succès', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('edit_receipt.html', receipt=receipt)
+
+
+@app.route('/receipt/delete/<int:receipt_id>', methods=['POST'])
+@login_required
+def delete_receipt(receipt_id):
+    # Only admin can delete
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    receipt = Receipt.query.get_or_404(receipt_id)
+    db.session.delete(receipt)
+    db.session.commit()
+    flash('Reçu supprimé avec succès', 'success')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/expense/edit/<int:expense_id>', methods=['GET', 'POST'])
+@login_required
+def edit_expense(expense_id):
+    # Only admin can edit
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    expense = Expense.query.get_or_404(expense_id)
+    
+    if request.method == 'POST':
+        expense.description = request.form['description']
+        expense.amount = float(request.form['amount'])
+        expense.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+        db.session.commit()
+        flash('Dépense mise à jour avec succès', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('edit_expense.html', expense=expense)
+
+
+@app.route('/expense/delete/<int:expense_id>', methods=['POST'])
+@login_required
+def delete_expense(expense_id):
+    # Only admin can delete
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    expense = Expense.query.get_or_404(expense_id)
+    db.session.delete(expense)
+    db.session.commit()
+    flash('Dépense supprimée avec succès', 'success')
+    return redirect(url_for('dashboard'))
+
 
 @app.route('/dashboard')
 @login_required

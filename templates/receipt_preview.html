@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aperçu du Reçu</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .preview-container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+
+    .receipt-preview {
+      background: white;
+      padding: 3rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+      border: 1px solid #e0e0e0;
+    }
+
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid #00bcd4;
+    }
+
+    .receipt-header h1 {
+      margin: 0;
+      color: #333;
+      font-size: 2rem;
+    }
+
+    .receipt-header .company-name {
+      font-size: 1.2rem;
+      color: #00bcd4;
+      margin: 0.5rem 0;
+    }
+
+    .receipt-number {
+      text-align: right;
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    .receipt-details {
+      margin: 2rem 0;
+    }
+
+    .detail-row {
+      display: flex;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #555;
+      width: 200px;
+      flex-shrink: 0;
+    }
+
+    .detail-value {
+      color: #333;
+      flex: 1;
+    }
+
+    .amount-highlight {
+      background: #f0f9ff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin: 2rem 0;
+      border-left: 4px solid #00bcd4;
+    }
+
+    .amount-highlight .price {
+      font-size: 1.8rem;
+      color: #00bcd4;
+      font-weight: bold;
+      margin: 0.5rem 0;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .action-buttons .btn {
+      min-width: 200px;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+    }
+
+    .btn-download {
+      background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+      color: white;
+      box-shadow: 0 4px 15px 0 rgba(0,188,212,0.4);
+    }
+
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(0,188,212,0.6);
+    }
+
+    .btn-new {
+      background: #4CAF50;
+      color: white;
+      box-shadow: 0 4px 15px 0 rgba(76,175,80,0.4);
+    }
+
+    .btn-new:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(76,175,80,0.6);
+    }
+
+    .btn-dashboard {
+      background: #e0e0e0;
+      color: #555;
+    }
+
+    .btn-dashboard:hover {
+      background: #d5d5d5;
+      transform: translateY(-2px);
+    }
+
+    .success-icon {
+      text-align: center;
+      font-size: 4rem;
+      color: #4CAF50;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .preview-container {
+        padding: 0.5rem;
+        margin: 0.5rem auto;
+      }
+
+      .receipt-preview {
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      .receipt-header h1 {
+        font-size: 1.5rem;
+      }
+
+      .receipt-header .company-name {
+        font-size: 1rem;
+      }
+
+      .receipt-number {
+        font-size: 0.9rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0 0.5rem;
+      }
+
+      .action-buttons .btn {
+        width: calc(100% - 1rem);
+        min-width: auto;
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+        margin: 0 0.5rem;
+      }
+
+      .detail-row {
+        flex-direction: column;
+        padding: 0.5rem 0;
+      }
+
+      .detail-label {
+        width: 100%;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+      }
+
+      .detail-value {
+        font-size: 0.95rem;
+      }
+
+      .amount-highlight {
+        padding: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .amount-highlight .price {
+        font-size: 1.5rem;
+      }
+
+      .success-icon {
+        font-size: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="main-menu">
+    <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    
+    <div class="nav-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+    </div>
+    
+    <div class="profile-menu">
+      <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <div class="profile-dropdown">
+        {% if session.username == 'admin' %}
+        <a href="/admin">Gérer les utilisateurs</a>
+        {% endif %}
+        <a href="/account">Mon compte</a>
+        <a href="/logout">Déconnexion</a>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="profile-info">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <button class="close-menu" onclick="closeMobileMenu()" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      {% if session.username == 'admin' %}
+      <a href="/admin">Gérer les utilisateurs</a>
+      {% endif %}
+      <a href="/account">Mon compte</a>
+      <a href="/logout">Déconnexion</a>
+    </div>
+  </div>
+  
+  <script>
+    function toggleMobileMenu() {
+      document.querySelector('.mobile-menu').classList.toggle('active');
+      document.querySelector('.mobile-overlay').classList.toggle('active');
+      document.body.style.overflow = document.querySelector('.mobile-menu').classList.contains('active') ? 'hidden' : '';
+    }
+    
+    function closeMobileMenu() {
+      document.querySelector('.mobile-menu').classList.remove('active');
+      document.querySelector('.mobile-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  </script>
+
+  <div class="preview-container">
+    <div class="receipt-preview">
+      <div class="receipt-number">
+        <strong>Reçu N°:</strong> {{ receipt.receipt_number }}
+      </div>
+
+      <div class="receipt-header">
+        <h1>Reçu</h1>
+        <p class="company-name"><strong>Paiement à Marate AI</strong></p>
+        <p style="color: #666; margin: 0;">{{ receipt.date.strftime('%d/%m/%Y à %H:%M') }}</p>
+      </div>
+
+      <div class="receipt-details">
+        <div class="detail-row">
+          <div class="detail-label">Client:</div>
+          <div class="detail-value">{{ receipt.customer_name }}</div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">Description:</div>
+          <div class="detail-value">{{ receipt.description }}</div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">Type de Paiement:</div>
+          <div class="detail-value">
+            {% if receipt.payment_type == 'recurring_monthly' %}
+              Paiement Mensuel Récurrent
+            {% elif receipt.payment_type == 'one_time' %}
+              Paiement Unique
+              {% if receipt.payment_reason %}
+                <br><em style="color: #666;">Raison: {{ receipt.payment_reason }}</em>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="amount-highlight">
+        <div class="detail-label">Montant:</div>
+        <div class="price">{{ "%0.0f"|format(receipt.price)|replace(",", " ") }} FCFA</div>
+        <div style="color: #666; margin-top: 0.5rem;">
+          <em>{{ receipt.amount_in_letters }}</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <a href="{{ url_for('download_receipt', receipt_id=receipt.id) }}" class="btn btn-download">
+        Télécharger PDF
+      </a>
+      <a href="/" class="btn btn-new">
+        Créer un Nouveau Reçu
+      </a>
+      <a href="/dashboard?tab=receipts" class="btn btn-dashboard">
+        Voir le Tableau de Bord
+      </a>
+    </div>
+  </div>
+</body>
+</html>

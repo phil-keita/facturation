@@ -10,9 +10,17 @@
 </head>
 <body>
   <nav class="main-menu">
-    <a href="/">Reçu</a>
-    <a href="/expenses">Dépense</a>
-    <a href="/dashboard">Tableau de bord</a>
+    <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    
+    <div class="nav-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+    </div>
     
     <div class="profile-menu">
       <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
@@ -22,14 +30,47 @@
       <div class="profile-dropdown">
         {% if session.username == 'admin' %}
         <a href="/admin">Gérer les utilisateurs</a>
-        <div class="divider"></div>
         {% endif %}
         <a href="/account">Mon compte</a>
-        <div class="divider"></div>
         <a href="/logout">Déconnexion</a>
       </div>
     </div>
   </nav>
+  
+  <div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="profile-info">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <button class="close-menu" onclick="closeMobileMenu()" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      {% if session.username == 'admin' %}
+      <a href="/admin">Gérer les utilisateurs</a>
+      {% endif %}
+      <a href="/account">Mon compte</a>
+      <a href="/logout">Déconnexion</a>
+    </div>
+  </div>
+  
+  <script>
+    function toggleMobileMenu() {
+      document.querySelector('.mobile-menu').classList.toggle('active');
+      document.querySelector('.mobile-overlay').classList.toggle('active');
+      document.body.style.overflow = document.querySelector('.mobile-menu').classList.contains('active') ? 'hidden' : '';
+    }
+    
+    function closeMobileMenu() {
+      document.querySelector('.mobile-menu').classList.remove('active');
+      document.querySelector('.mobile-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  </script>
 
   <div class="account-page">
     <div class="account-header">

@@ -9,9 +9,17 @@
 </head>
 <body>
   <nav class="main-menu">
-    <a href="/">Reçu</a>
-    <a href="/expenses">Dépense</a>
-    <a href="/dashboard" class="active">Tableau de bord</a>
+    <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    
+    <div class="nav-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard" class="active">Tableau de bord</a>
+    </div>
     
     <div class="profile-menu">
       <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
@@ -21,24 +29,70 @@
       <div class="profile-dropdown">
         {% if session.username == 'admin' %}
         <a href="/admin">Gérer les utilisateurs</a>
-        <div class="divider"></div>
         {% endif %}
         <a href="/account">Mon compte</a>
-        <div class="divider"></div>
         <a href="/logout">Déconnexion</a>
       </div>
     </div>
   </nav>
   
-  <div class="dashboard-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-      <h1 style="margin: 0;">Tableau de Bord</h1>
-      <div class="view-toggle">
-        <a href="/dashboard?view=personal" class="toggle-btn {% if view_mode == 'personal' %}active{% endif %}">Mes Données</a>
-        <a href="/dashboard?view=company" class="toggle-btn {% if view_mode == 'company' %}active{% endif %}">Entreprise</a>
+  <div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="profile-info">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
       </div>
+      <button class="close-menu" onclick="closeMobileMenu()" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      {% if session.username == 'admin' %}
+      <a href="/admin">Gérer les utilisateurs</a>
+      {% endif %}
+      <a href="/account">Mon compte</a>
+      <a href="/logout">Déconnexion</a>
+    </div>
+  </div>
+  
+  <script>
+    function toggleMobileMenu() {
+      document.querySelector('.mobile-menu').classList.toggle('active');
+      document.querySelector('.mobile-overlay').classList.toggle('active');
+      document.body.style.overflow = document.querySelector('.mobile-menu').classList.contains('active') ? 'hidden' : '';
+    }
+    
+    function closeMobileMenu() {
+      document.querySelector('.mobile-menu').classList.remove('active');
+      document.querySelector('.mobile-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  </script>
+  
+  <div class="dashboard-container">
+    <h1>Tableau de Bord</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages">
+        {% for category, msg in messages %}
+          <li class="{{ category }}">{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Dashboard Tabs -->
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" onclick="switchTab('overview')">Aperçu</button>
+      <button class="tab-btn" onclick="switchTab('receipts')">Reçus</button>
+      <button class="tab-btn" onclick="switchTab('expenses')">Dépenses</button>
     </div>
 
+    <!-- Overview Tab -->
+    <div id="overview-tab" class="tab-content active">
     <div class="summary-cards">
       <div class="card income">
         <h3>Revenu Total</h3>
@@ -92,9 +146,18 @@
       <p class="no-data">Aucune donnée disponible</p>
       {% endif %}
     </div>
+    </div>
 
+    <!-- Receipts Tab -->
+    <div id="receipts-tab" class="tab-content">
     <div class="section">
-      <h2>Reçus Récents</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Reçus</h2>
+        <div class="view-toggle">
+          <a href="/dashboard?view=personal&tab=receipts" class="toggle-btn {% if view_mode == 'personal' %}active{% endif %}">Mes Données</a>
+          <a href="/dashboard?view=company&tab=receipts" class="toggle-btn {% if view_mode == 'company' %}active{% endif %}">Entreprise</a>
+        </div>
+      </div>
       {% if recent_receipts %}
       <table>
         <thead>
@@ -104,6 +167,10 @@
             <th>Description</th>
             <th>Montant</th>
             <th>Date</th>
+            <th>Créé par</th>
+            {% if session.username == 'admin' %}
+            <th>Actions</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -114,6 +181,15 @@
             <td>{{ receipt.description }}</td>
             <td>{{ "%0.0f"|format(receipt.price)|replace(",", " ") }} FCFA</td>
             <td>{{ receipt.date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ receipt.user.username if receipt.user else 'N/A' }}</td>
+            {% if session.username == 'admin' %}
+            <td class="action-buttons">
+              <button type="button" class="btn-edit" onclick="openEditReceiptModal({{ receipt.id }}, '{{ receipt.customer_name|replace("'", "\\'") }}', '{{ receipt.description|replace("'", "\\'") }}', {{ receipt.price }}, '{{ receipt.amount_in_letters|replace("'", "\\'") if receipt.amount_in_letters else '' }}', '{{ receipt.date.strftime('%Y-%m-%d') }}')" title="Modifier">Modifier</button>
+              <form method="POST" action="{{ url_for('delete_receipt', receipt_id=receipt.id) }}" id="deleteReceiptForm{{ receipt.id }}" style="display: inline;">
+                <button type="button" class="btn-delete" onclick="openConfirmModal('receipt', {{ receipt.id }})" title="Supprimer">Supprimer</button>
+              </form>
+            </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -122,9 +198,18 @@
       <p class="no-data">Aucun reçu enregistré</p>
       {% endif %}
     </div>
+    </div>
 
+    <!-- Expenses Tab -->
+    <div id="expenses-tab" class="tab-content">
     <div class="section">
-      <h2>Dépenses Récentes</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Dépenses</h2>
+        <div class="view-toggle">
+          <a href="/dashboard?view=personal&tab=expenses" class="toggle-btn {% if view_mode == 'personal' %}active{% endif %}">Mes Données</a>
+          <a href="/dashboard?view=company&tab=expenses" class="toggle-btn {% if view_mode == 'company' %}active{% endif %}">Entreprise</a>
+        </div>
+      </div>
       {% if recent_expenses %}
       <table>
         <thead>
@@ -132,6 +217,10 @@
             <th>Description</th>
             <th>Montant</th>
             <th>Date</th>
+            <th>Créé par</th>
+            {% if session.username == 'admin' %}
+            <th>Actions</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -140,6 +229,15 @@
             <td>{{ expense.description }}</td>
             <td>{{ "%0.0f"|format(expense.amount)|replace(",", " ") }} FCFA</td>
             <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ expense.user.username if expense.user else 'N/A' }}</td>
+            {% if session.username == 'admin' %}
+            <td class="action-buttons">
+              <button type="button" class="btn-edit" onclick="openEditExpenseModal({{ expense.id }}, '{{ expense.description|replace("'", "\\'") }}', {{ expense.amount }}, '{{ expense.date.strftime('%Y-%m-%d') }}')" title="Modifier">Modifier</button>
+              <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" id="deleteExpenseForm{{ expense.id }}" style="display: inline;">
+                <button type="button" class="btn-delete" onclick="openConfirmModal('expense', {{ expense.id }})" title="Supprimer">Supprimer</button>
+              </form>
+            </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -148,8 +246,70 @@
       <p class="no-data">Aucune dépense enregistrée</p>
       {% endif %}
     </div>
+    </div>
 
   </div>
+
+  <script>
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Remove active from all buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName + '-tab').classList.add('active');
+      
+      // Mark button as active
+      event.target.classList.add('active');
+      
+      // Save current tab to localStorage
+      localStorage.setItem('activeTab', tabName);
+    }
+    
+    // On page load, restore the last active tab
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check URL parameter first
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      
+      // Then check localStorage
+      const savedTab = localStorage.getItem('activeTab');
+      
+      let targetTab = null;
+      
+      if (tabParam) {
+        targetTab = tabParam;
+      } else if (savedTab) {
+        targetTab = savedTab;
+      }
+      
+      if (targetTab) {
+        const tabs = {
+          'receipts': 1,
+          'expenses': 2,
+          'overview': 0
+        };
+        
+        if (tabs.hasOwnProperty(targetTab)) {
+          document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+          });
+          document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          
+          document.getElementById(targetTab + '-tab').classList.add('active');
+          document.querySelectorAll('.tab-btn')[tabs[targetTab]].classList.add('active');
+        }
+      }
+    });
+  </script>
 
   <script>
     // Monthly income bar chart
@@ -248,6 +408,209 @@
         }
       }
     });
+  </script>
+
+  <!-- Edit Receipt Modal -->
+  <div class="edit-modal-overlay" id="editReceiptModal">
+    <div class="edit-modal">
+      <h3>Modifier Reçu</h3>
+      <form id="editReceiptForm" method="POST">
+        <input type="hidden" id="edit_receipt_id" name="receipt_id">
+        
+        <div class="form-group">
+          <label for="edit_receipt_name">Nom du Client</label>
+          <input type="text" id="edit_receipt_name" name="name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_receipt_description">Description</label>
+          <input type="text" id="edit_receipt_description" name="description" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_receipt_price">Montant (FCFA)</label>
+          <input type="number" id="edit_receipt_price" name="price" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_receipt_amount_in_letters">Montant en Lettres (optionnel)</label>
+          <input type="text" id="edit_receipt_amount_in_letters" name="amount_in_letters">
+        </div>
+
+        <div class="form-group">
+          <label for="edit_receipt_date">Date</label>
+          <input type="date" id="edit_receipt_date" name="date" required>
+        </div>
+
+        <div class="edit-modal-actions">
+          <button type="button" class="edit-modal-cancel" onclick="closeEditReceiptModal()">Annuler</button>
+          <button type="submit" class="edit-modal-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Expense Modal -->
+  <div class="edit-modal-overlay" id="editExpenseModal">
+    <div class="edit-modal">
+      <h3>Modifier Dépense</h3>
+      <form id="editExpenseForm" method="POST">
+        <input type="hidden" id="edit_expense_id" name="expense_id">
+        
+        <div class="form-group">
+          <label for="edit_expense_description">Description</label>
+          <input type="text" id="edit_expense_description" name="description" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_expense_amount">Montant (FCFA)</label>
+          <input type="number" id="edit_expense_amount" name="amount" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_expense_date">Date</label>
+          <input type="date" id="edit_expense_date" name="date" required>
+        </div>
+
+        <div class="edit-modal-actions">
+          <button type="button" class="edit-modal-cancel" onclick="closeEditExpenseModal()">Annuler</button>
+          <button type="submit" class="edit-modal-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Edit Receipt Modal Functions
+    function openEditReceiptModal(receiptId, name, description, price, amountInLetters, date) {
+      document.getElementById('edit_receipt_id').value = receiptId;
+      document.getElementById('edit_receipt_name').value = name;
+      document.getElementById('edit_receipt_description').value = description;
+      document.getElementById('edit_receipt_price').value = price;
+      document.getElementById('edit_receipt_amount_in_letters').value = amountInLetters || '';
+      document.getElementById('edit_receipt_date').value = date;
+      
+      const form = document.getElementById('editReceiptForm');
+      form.action = '/receipt/edit/' + receiptId;
+      
+      document.getElementById('editReceiptModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditReceiptModal() {
+      document.getElementById('editReceiptModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Edit Expense Modal Functions
+    function openEditExpenseModal(expenseId, description, amount, date) {
+      document.getElementById('edit_expense_id').value = expenseId;
+      document.getElementById('edit_expense_description').value = description;
+      document.getElementById('edit_expense_amount').value = amount;
+      document.getElementById('edit_expense_date').value = date;
+      
+      const form = document.getElementById('editExpenseForm');
+      form.action = '/expense/edit/' + expenseId;
+      
+      document.getElementById('editExpenseModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditExpenseModal() {
+      document.getElementById('editExpenseModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Close modals on overlay click
+    document.getElementById('editReceiptModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeEditReceiptModal();
+      }
+    });
+
+    document.getElementById('editExpenseModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeEditExpenseModal();
+      }
+    });
+
+    // Close modals on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (document.getElementById('editReceiptModal').classList.contains('active')) {
+          closeEditReceiptModal();
+        }
+        if (document.getElementById('editExpenseModal').classList.contains('active')) {
+          closeEditExpenseModal();
+        }
+        if (document.getElementById('confirmModal').classList.contains('active')) {
+          closeConfirmModal();
+        }
+      }
+    });
+  </script>
+
+  <!-- Confirmation Modal -->
+  <div class="confirm-modal-overlay" id="confirmModal">
+    <div class="confirm-modal">
+      <h3>Confirmation de suppression</h3>
+      <p id="confirmMessage"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="confirm-modal-cancel" onclick="closeConfirmModal()">Annuler</button>
+        <button type="button" class="confirm-modal-delete" id="confirmDeleteBtn" onclick="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDeleteForm = null;
+    let currentDeleteType = null;
+
+    function openConfirmModal(type, id) {
+      currentDeleteType = type;
+      currentDeleteForm = document.getElementById('delete' + (type === 'receipt' ? 'Receipt' : 'Expense') + 'Form' + id);
+      
+      const message = type === 'receipt' 
+        ? 'Êtes-vous sûr de vouloir supprimer ce reçu ?'
+        : 'Êtes-vous sûr de vouloir supprimer cette dépense ?';
+      
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModal').classList.remove('active');
+      document.body.style.overflow = '';
+      currentDeleteForm = null;
+      currentDeleteType = null;
+    }
+
+    function confirmDelete() {
+      if (currentDeleteForm) {
+        currentDeleteForm.submit();
+      }
+      closeConfirmModal();
+    }
+
+    // Close modal on overlay click
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeConfirmModal();
+      }
+    });
+
+    // Auto-hide flash messages after 5 seconds
+    setTimeout(function() {
+      const flashMessages = document.querySelector('.flash-messages');
+      if (flashMessages) {
+        flashMessages.style.transition = 'opacity 0.5s ease-out';
+        flashMessages.style.opacity = '0';
+        setTimeout(function() {
+          flashMessages.style.display = 'none';
+        }, 500);
+      }
+    }, 5000);
   </script>
 </body>
 </html>

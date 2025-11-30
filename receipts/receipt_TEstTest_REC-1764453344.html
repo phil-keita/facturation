@@ -70,28 +70,23 @@
 </head>
 <body>
   <div class="receipt-number">
-    <strong>Reçu N°:</strong> {{ receipt_number }}
+    <strong>Reçu N°:</strong> REC-1764453344
   </div>
   <div class="header">
     <h1>Reçu</h1>
     <p style="font-size: 18px; color: #00bcd4; margin: 10px 0;"><strong>Paiement à Marate AI</strong></p>
-    <p>Date: {{ date }}</p>
+    <p>Date: 2025-11-29 13:55:44</p>
   </div>
   <div class="details">
-    <p><strong>Client:</strong> {{ name }}</p>
-    <p><strong>Description:</strong> {{ description }}</p>
+    <p><strong>Client:</strong> TEstTest</p>
+    <p><strong>Description:</strong> Paiement mensuel récurrent</p>
     <p><strong>Type de Paiement:</strong> 
-      {% if payment_type == 'recurring_monthly' %}
+      
         Paiement Mensuel Récurrent
-      {% elif payment_type == 'one_time' %}
-        Paiement Unique
-        {% if payment_reason %}
-          <br><em>Raison: {{ payment_reason }}</em>
-        {% endif %}
-      {% endif %}
+      
     </p>
-    <p><strong>Prix:</strong> {{ price }} FCFA</p>
-    <p><strong>Montant en Lettres:</strong> {{ amount_in_letters }}</p>
+    <p><strong>Prix:</strong> 5000.0 FCFA</p>
+    <p><strong>Montant en Lettres:</strong> </p>
   </div>
   
   <div class="signature-stamp-section">
