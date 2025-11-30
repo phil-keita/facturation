@@ -518,9 +518,27 @@ button:active {
 
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: 1rem;
-    margin: 0 0.5rem 1rem 0.5rem;
-    border-radius: 0;
+    padding: 0.75rem;
+    margin: 0.5rem;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  }
+
+  .dashboard-container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .dashboard-tabs {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    padding: 3px;
+  }
+
+  .tab-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    flex: 1;
   }
 }
 
@@ -699,15 +717,77 @@ button:active {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
-  
-  .chart-card {
-    padding: 1rem;
+
+  .card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .card .amount {
+    font-size: 1.5rem;
   }
   
+  .chart-card {
+    padding: 0.75rem;
+    background: #fff;
+    width: 100%;
+  }
+
+  .chart-card h2 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .chart-card canvas {
+    max-height: 250px;
+    width: 100% !important;
+  }
+
+  .section {
+    margin-bottom: 1.5rem;
+  }
+
+  .section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  table {
+    font-size: 0.8rem;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   table th,
   table td {
-    padding: 0.5rem;
-    font-size: 0.85rem;
+    padding: 0.5rem 0.35rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .action-buttons button,
+  .action-buttons .btn-edit,
+  .action-buttons .btn-delete {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    width: auto;
+  }
+
+  .action-buttons form {
+    width: 100%;
+  }
+
+  .no-data {
+    font-size: 0.9rem;
+    padding: 1.5rem;
   }
 }
 
@@ -744,8 +824,8 @@ table {
 }
 
 table thead {
-  background: #00bcd4;
-  color: white;
+  background: #f8f9fa;
+  color: #555;
 }
 
 table th,
@@ -953,4 +1033,118 @@ table tbody tr:hover {
 
 .edit-modal-save:hover {
   transform: translateY(-2px);
+}
+
+/* ========================================
+   Confirmation Modal Styles
+   ======================================== */
+
+.confirm-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.confirm-modal-overlay.active {
+  display: flex;
+}
+
+.confirm-modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 90%;
+  padding: 24px;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.confirm-modal h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.2rem;
+  color: #d32f2f;
+}
+
+.confirm-modal p {
+  margin: 0 0 20px 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-modal-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: none !important;
+}
+
+.confirm-modal-cancel {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.confirm-modal-cancel:hover {
+  background: #e0e0e0;
+  box-shadow: none !important;
+}
+
+.confirm-modal-delete {
+  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+  color: #fff;
+}
+
+.confirm-modal-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: none !important;
+}
+
+/* ========================================
+   Flash Messages
+   ======================================== */
+
+.flash-messages {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+}
+
+.flash-messages li {
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.flash-messages li.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.flash-messages li.danger {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.flash-messages li.warning {
+  background: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
 }

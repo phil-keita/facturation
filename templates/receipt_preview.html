@@ -138,28 +138,67 @@
 
     @media (max-width: 768px) {
       .preview-container {
-        padding: 1rem;
+        padding: 0.5rem;
+        margin: 0.5rem auto;
       }
 
       .receipt-preview {
-        padding: 1.5rem;
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      .receipt-header h1 {
+        font-size: 1.5rem;
+      }
+
+      .receipt-header .company-name {
+        font-size: 1rem;
+      }
+
+      .receipt-number {
+        font-size: 0.9rem;
       }
 
       .action-buttons {
         flex-direction: column;
+        gap: 0.75rem;
+        padding: 0 0.5rem;
       }
 
       .action-buttons .btn {
-        width: 100%;
+        width: calc(100% - 1rem);
+        min-width: auto;
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+        margin: 0 0.5rem;
       }
 
       .detail-row {
         flex-direction: column;
+        padding: 0.5rem 0;
       }
 
       .detail-label {
         width: 100%;
         margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+      }
+
+      .detail-value {
+        font-size: 0.95rem;
+      }
+
+      .amount-highlight {
+        padding: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .amount-highlight .price {
+        font-size: 1.5rem;
+      }
+
+      .success-icon {
+        font-size: 3rem;
       }
     }
   </style>
@@ -282,7 +321,7 @@
       <a href="/" class="btn btn-new">
         Créer un Nouveau Reçu
       </a>
-      <a href="/dashboard" class="btn btn-dashboard">
+      <a href="/dashboard?tab=receipts" class="btn btn-dashboard">
         Voir le Tableau de Bord
       </a>
     </div>

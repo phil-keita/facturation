@@ -74,6 +74,16 @@
   <div class="dashboard-container">
     <h1>Tableau de Bord</h1>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages">
+        {% for category, msg in messages %}
+          <li class="{{ category }}">{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
     <!-- Dashboard Tabs -->
     <div class="dashboard-tabs">
       <button class="tab-btn active" onclick="switchTab('overview')">Aperçu</button>
@@ -157,9 +167,7 @@
             <th>Description</th>
             <th>Montant</th>
             <th>Date</th>
-            {% if view_mode == 'company' %}
             <th>Créé par</th>
-            {% endif %}
             {% if session.username == 'admin' %}
             <th>Actions</th>
             {% endif %}
@@ -173,14 +181,12 @@
             <td>{{ receipt.description }}</td>
             <td>{{ "%0.0f"|format(receipt.price)|replace(",", " ") }} FCFA</td>
             <td>{{ receipt.date.strftime('%Y-%m-%d') }}</td>
-            {% if view_mode == 'company' %}
             <td>{{ receipt.user.username if receipt.user else 'N/A' }}</td>
-            {% endif %}
             {% if session.username == 'admin' %}
             <td class="action-buttons">
               <button type="button" class="btn-edit" onclick="openEditReceiptModal({{ receipt.id }}, '{{ receipt.customer_name|replace("'", "\\'") }}', '{{ receipt.description|replace("'", "\\'") }}', {{ receipt.price }}, '{{ receipt.amount_in_letters|replace("'", "\\'") if receipt.amount_in_letters else '' }}', '{{ receipt.date.strftime('%Y-%m-%d') }}')" title="Modifier">Modifier</button>
-              <form method="POST" action="{{ url_for('delete_receipt', receipt_id=receipt.id) }}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce reçu ?');">
-                <button type="submit" class="btn-delete" title="Supprimer">Supprimer</button>
+              <form method="POST" action="{{ url_for('delete_receipt', receipt_id=receipt.id) }}" id="deleteReceiptForm{{ receipt.id }}" style="display: inline;">
+                <button type="button" class="btn-delete" onclick="openConfirmModal('receipt', {{ receipt.id }})" title="Supprimer">Supprimer</button>
               </form>
             </td>
             {% endif %}
@@ -211,9 +217,7 @@
             <th>Description</th>
             <th>Montant</th>
             <th>Date</th>
-            {% if view_mode == 'company' %}
             <th>Créé par</th>
-            {% endif %}
             {% if session.username == 'admin' %}
             <th>Actions</th>
             {% endif %}
@@ -225,14 +229,12 @@
             <td>{{ expense.description }}</td>
             <td>{{ "%0.0f"|format(expense.amount)|replace(",", " ") }} FCFA</td>
             <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
-            {% if view_mode == 'company' %}
             <td>{{ expense.user.username if expense.user else 'N/A' }}</td>
-            {% endif %}
             {% if session.username == 'admin' %}
             <td class="action-buttons">
               <button type="button" class="btn-edit" onclick="openEditExpenseModal({{ expense.id }}, '{{ expense.description|replace("'", "\\'") }}', {{ expense.amount }}, '{{ expense.date.strftime('%Y-%m-%d') }}')" title="Modifier">Modifier</button>
-              <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette dépense ?');">
-                <button type="submit" class="btn-delete" title="Supprimer">Supprimer</button>
+              <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" id="deleteExpenseForm{{ expense.id }}" style="display: inline;">
+                <button type="button" class="btn-delete" onclick="openConfirmModal('expense', {{ expense.id }})" title="Supprimer">Supprimer</button>
               </form>
             </td>
             {% endif %}
@@ -541,8 +543,74 @@
         if (document.getElementById('editExpenseModal').classList.contains('active')) {
           closeEditExpenseModal();
         }
+        if (document.getElementById('confirmModal').classList.contains('active')) {
+          closeConfirmModal();
+        }
       }
     });
+  </script>
+
+  <!-- Confirmation Modal -->
+  <div class="confirm-modal-overlay" id="confirmModal">
+    <div class="confirm-modal">
+      <h3>Confirmation de suppression</h3>
+      <p id="confirmMessage"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="confirm-modal-cancel" onclick="closeConfirmModal()">Annuler</button>
+        <button type="button" class="confirm-modal-delete" id="confirmDeleteBtn" onclick="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDeleteForm = null;
+    let currentDeleteType = null;
+
+    function openConfirmModal(type, id) {
+      currentDeleteType = type;
+      currentDeleteForm = document.getElementById('delete' + (type === 'receipt' ? 'Receipt' : 'Expense') + 'Form' + id);
+      
+      const message = type === 'receipt' 
+        ? 'Êtes-vous sûr de vouloir supprimer ce reçu ?'
+        : 'Êtes-vous sûr de vouloir supprimer cette dépense ?';
+      
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModal').classList.remove('active');
+      document.body.style.overflow = '';
+      currentDeleteForm = null;
+      currentDeleteType = null;
+    }
+
+    function confirmDelete() {
+      if (currentDeleteForm) {
+        currentDeleteForm.submit();
+      }
+      closeConfirmModal();
+    }
+
+    // Close modal on overlay click
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeConfirmModal();
+      }
+    });
+
+    // Auto-hide flash messages after 5 seconds
+    setTimeout(function() {
+      const flashMessages = document.querySelector('.flash-messages');
+      if (flashMessages) {
+        flashMessages.style.transition = 'opacity 0.5s ease-out';
+        flashMessages.style.opacity = '0';
+        setTimeout(function() {
+          flashMessages.style.display = 'none';
+        }, 500);
+      }
+    }, 5000);
   </script>
 </body>
 </html>
