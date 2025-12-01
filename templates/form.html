@@ -43,6 +43,7 @@
       <div class="profile-dropdown">
         {% if session.username == 'admin' %}
         <a href="/admin">Gérer les utilisateurs</a>
+        <a href="/clients">Gérer les clients</a>
         {% endif %}
         <a href="/account">Mon compte</a>
         <a href="/logout">Déconnexion</a>
@@ -65,6 +66,7 @@
       <a href="/dashboard">Tableau de bord</a>
       {% if session.username == 'admin' %}
       <a href="/admin">Gérer les utilisateurs</a>
+      <a href="/clients">Gérer les clients</a>
       {% endif %}
       <a href="/account">Mon compte</a>
       <a href="/logout">Déconnexion</a>
@@ -89,6 +91,19 @@
     <div class="container">
       <h2>Générateur de Reçu</h2>
     <form action="/generate" method="POST">
+      <label for="client_select">Sélectionner un Client (optionnel):</label>
+      <select name="client_select" id="client_select" onchange="fillClientData()">
+        <option value="">-- Saisir manuellement --</option>
+        {% for client in clients %}
+        <option value="{{ client.id }}" 
+                data-name="{{ client.name }}"
+                data-monthly="{{ client.monthly_payment }}"
+                data-installation="{{ client.installation_fee }}">
+          {{ client.name }} ({{ client.type or 'Client' }})
+        </option>
+        {% endfor %}
+      </select>
+
       <label for="name">Nom du Client:</label>
       <input type="text" name="name" id="name" required>
 
@@ -114,5 +129,33 @@
     </form>
     </div>
   </div>
+  
+  <script>
+    function fillClientData() {
+      const select = document.getElementById('client_select');
+      const selectedOption = select.options[select.selectedIndex];
+      
+      if (selectedOption.value) {
+        // Fill in client name
+        document.getElementById('name').value = selectedOption.dataset.name || '';
+        
+        // Auto-select recurring monthly payment
+        document.getElementById('payment_type').value = 'recurring_monthly';
+        togglePaymentReason();
+        
+        // Fill in monthly payment amount
+        const monthlyPayment = parseFloat(selectedOption.dataset.monthly);
+        if (monthlyPayment && monthlyPayment > 0) {
+          document.getElementById('price').value = monthlyPayment;
+        }
+      } else {
+        // Clear form if manual entry selected
+        document.getElementById('name').value = '';
+        document.getElementById('payment_type').value = '';
+        document.getElementById('price').value = '';
+        togglePaymentReason();
+      }
+    }
+  </script>
 </body>
 </html>

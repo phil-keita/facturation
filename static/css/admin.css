@@ -352,6 +352,7 @@ table.admin-table tbody tr:last-child td {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .delete-modal-actions button {
@@ -360,35 +361,33 @@ table.admin-table tbody tr:last-child td {
   border-radius: 8px;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s;
+  box-shadow: none !important;
+  transform: none !important;
+  margin: 0 !important;
 }
 
 .delete-modal-cancel {
   background: #f0f0f0;
   color: #555;
-  box-shadow: none !important;
 }
 
 .delete-modal-cancel:hover {
   background: #e0e0e0;
-  box-shadow: none !important;
 }
 
 .delete-modal-confirm {
   background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
   color: #fff;
-  box-shadow: none !important;
 }
 
 .delete-modal-confirm:hover {
-  transform: translateY(-2px);
-  box-shadow: none !important;
+  background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
 }
 
 .delete-modal-confirm:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
 }
 
 /* ========================================
@@ -466,4 +465,160 @@ table.admin-table tbody tr:last-child td {
 
 .confirm-modal-delete:hover {
   transform: translateY(-2px);
+}
+
+/* ========================================
+   Admin Tabs
+   ======================================== */
+.admin-tabs {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 0;
+}
+
+.tab-link {
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.tab-link:hover {
+  color: #00bcd4;
+}
+
+.tab-link.active {
+  color: #00bcd4;
+  border-bottom-color: #00bcd4;
+}
+
+/* ========================================
+   Client Table & Forms
+   ======================================== */
+.clients-table th,
+.clients-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-stopped {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.btn-flat-small,
+.btn-flat-danger-small {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  margin: 0 4px;
+}
+
+.btn-flat-small {
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+  color: white;
+}
+
+.btn-flat-small:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+.btn-flat-danger-small {
+  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+  color: white;
+}
+
+.btn-flat-danger-small:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+.btn-small,
+.btn-danger-small {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  margin: 0 4px;
+  box-shadow: none !important;
+}
+
+.btn-small {
+  background: #00bcd4;
+  color: white;
+}
+
+.btn-small:hover {
+  background: #0097a7;
+}
+
+.btn-danger-small {
+  background: #d32f2f;
+  color: white;
+}
+
+.btn-danger-small:hover {
+  background: #b71c1c;
+}
+
+/* ========================================
+   Responsive Adjustments for Clients
+   ======================================== */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .clients-table {
+    font-size: 0.85rem;
+  }
+
+  .clients-table th,
+  .clients-table td {
+    padding: 8px 4px;
+  }
+  
+  .btn-flat-small,
+  .btn-flat-danger-small {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
 }

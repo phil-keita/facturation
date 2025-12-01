@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, send_file, redirect, url_for,
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 import os
-from database import db, Receipt, Expense
+from database import db, Receipt, Expense, Client
 from sqlalchemy import func, text
 import secrets
 
@@ -153,6 +153,125 @@ def admin_delete():
     return redirect(url_for('admin'))
 
 
+@app.route('/clients')
+@login_required
+def clients():
+    # Only admin can access client management
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('index'))
+    
+    clients = Client.query.order_by(Client.created_at.desc()).all()
+    return render_template('clients.html', clients=clients)
+
+
+@app.route('/clients/add', methods=['POST'])
+@login_required
+def clients_add():
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('index'))
+    
+    name = request.form.get('name', '').strip()
+    client_type = request.form.get('type', '').strip()
+    address = request.form.get('address', '').strip()
+    start_date_str = request.form.get('start_date', '').strip()
+    installation_fee = request.form.get('installation_fee', '0').strip()
+    monthly_payment = request.form.get('monthly_payment', '0').strip()
+    status = request.form.get('status', 'active').strip()
+    
+    if not name or not start_date_str:
+        flash('Le nom et la date de début sont requis', 'danger')
+        return redirect(url_for('clients'))
+    
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        installation_fee_val = float(installation_fee) if installation_fee else 0.0
+        monthly_payment_val = float(monthly_payment) if monthly_payment else 0.0
+        
+        new_client = Client(
+            name=name,
+            type=client_type,
+            address=address,
+            start_date=start_date,
+            installation_fee=installation_fee_val,
+            monthly_payment=monthly_payment_val,
+            status=status
+        )
+        db.session.add(new_client)
+        db.session.commit()
+        flash(f'Client {name} créé avec succès', 'success')
+    except ValueError as e:
+        flash(f'Erreur de format: {str(e)}', 'danger')
+    
+    return redirect(url_for('clients'))
+
+
+@app.route('/clients/edit/<int:client_id>', methods=['POST'])
+@login_required
+def clients_edit(client_id):
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('index'))
+    
+    client = Client.query.get_or_404(client_id)
+    
+    client.name = request.form.get('name', '').strip()
+    client.type = request.form.get('type', '').strip()
+    client.address = request.form.get('address', '').strip()
+    start_date_str = request.form.get('start_date', '').strip()
+    client.installation_fee = float(request.form.get('installation_fee', '0'))
+    client.monthly_payment = float(request.form.get('monthly_payment', '0'))
+    client.status = request.form.get('status', 'active').strip()
+    end_date_str = request.form.get('end_date', '').strip()
+    
+    try:
+        if start_date_str:
+            client.start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        if end_date_str:
+            client.end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            client.end_date = None
+        
+        db.session.commit()
+        flash(f'Client {client.name} mis à jour', 'success')
+    except ValueError as e:
+        flash(f'Erreur de format: {str(e)}', 'danger')
+    
+    return redirect(url_for('clients'))
+
+
+@app.route('/clients/delete/<int:client_id>', methods=['POST'])
+@login_required
+def clients_delete(client_id):
+    if session.get('username') != 'admin':
+        flash('Accès administrateur requis', 'danger')
+        return redirect(url_for('index'))
+    
+    client = Client.query.get_or_404(client_id)
+    client_name = client.name
+    db.session.delete(client)
+    db.session.commit()
+    flash(f'Client {client_name} supprimé', 'success')
+    return redirect(url_for('clients'))
+
+
+@app.route('/api/clients/<int:client_id>')
+@login_required
+def api_get_client(client_id):
+    """API endpoint to get client details for auto-filling forms"""
+    client = Client.query.get_or_404(client_id)
+    return {
+        'id': client.id,
+        'name': client.name,
+        'type': client.type,
+        'address': client.address,
+        'monthly_payment': client.monthly_payment,
+        'installation_fee': client.installation_fee,
+        'status': client.status
+    }
+
+
 @app.route('/account', methods=['GET', 'POST'])
 @login_required
 def account():
@@ -199,7 +318,9 @@ def account():
 @app.route('/')
 @login_required
 def index():
-    return render_template('form.html')
+    # Get all active clients for the dropdown
+    clients = Client.query.filter_by(status='active').order_by(Client.name).all()
+    return render_template('form.html', clients=clients)
 
 @app.route('/generate', methods=['POST'])
 @login_required
