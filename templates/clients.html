@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin - Utilisateurs</title>
+    <title>Gestion des Clients</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -76,7 +76,7 @@
 
     <div class="admin-page">
       <div class="admin-header">
-        <h1>Gestion des Utilisateurs</h1>
+        <h1>Gestion des Clients</h1>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -90,93 +90,8 @@
       {% endwith %}
 
       <div class="admin-section">
-        <h2>Ajouter un Utilisateur</h2>
-        <form method="post" class="admin-form" autocomplete="off" onsubmit="return validatePasswords()">
-            <div class="form-group">
-              <input name="username" id="username" placeholder="Entrez le nom d'utilisateur" required>
-            </div>
-            <div class="form-group">
-              <div class="input-wrapper">
-                <input name="password" id="password" type="password" placeholder="Entrez le mot de passe" required>
-                <span class="password-toggle" onclick="togglePasswordField('password', this)">
-                  <i class="fa-regular fa-eye"></i>
-                </span>
-              </div>
-            </div>
-            <div class="form-group">
-              <div class="input-wrapper">
-                <input name="confirm_password" id="confirm_password" type="password" placeholder="Confirmez le mot de passe" required>
-                <span class="password-toggle" onclick="togglePasswordField('confirm_password', this)">
-                  <i class="fa-regular fa-eye"></i>
-                </span>
-              </div>
-            </div>
-            <button class="btn-flat" type="submit">Ajouter l'utilisateur</button>
-        </form>
-        <script>
-          function validatePasswords() {
-            const password = document.getElementById('password').value;
-            const confirm = document.getElementById('confirm_password').value;
-            if (password !== confirm) {
-              alert('Les mots de passe ne correspondent pas!');
-              return false;
-            }
-            return true;
-          }
-          
-          function togglePasswordField(fieldId, toggleIcon) {
-            const input = document.getElementById(fieldId);
-            const icon = toggleIcon.querySelector('i');
-            if (input.type === 'password') {
-              input.type = 'text';
-              icon.className = 'fa-regular fa-eye-slash';
-            } else {
-              input.type = 'password';
-              icon.className = 'fa-regular fa-eye';
-            }
-          }
-        </script>
-      </div>
-
-      <div class="admin-section">
-        <h2>Tous les Utilisateurs</h2>
-        <div class="admin-table-wrapper">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Nom d'utilisateur</th>
-                <th>Créé le</th>
-                <th style="width: 120px; text-align: center;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-            {% for u in users %}
-              <tr>
-                <td><strong>{{ u.username }}</strong></td>
-                <td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td style="text-align: center;">
-                  {% if u.username != 'admin' %}
-                  <form method="post" action="{{ url_for('admin_delete') }}" style="display:inline" onsubmit="return confirmDelete('{{ u.username }}')">
-                    <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <button class="btn-flat-danger" type="submit">Supprimer</button>
-                  </form>
-                  {% else %}
-                    <span style="opacity:0.5; font-size:0.85rem;">Protégé</span>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <p class="user-count">Total des utilisateurs: {{ users|length }}</p>
-      </div>
-      {% endif %}
-
-      {% if active_tab == 'clients' %}
-      <div class="admin-section">
         <h2>Ajouter un Client</h2>
-        <form method="post" action="{{ url_for('admin_clients_add') }}" class="admin-form">
+        <form method="post" action="{{ url_for('clients_add') }}" class="admin-form" style="display: block;">
           <div class="form-row">
             <div class="form-group">
               <label>Nom du client *</label>
@@ -184,7 +99,7 @@
             </div>
             <div class="form-group">
               <label>Type</label>
-              <input name="type" placeholder="Ex: Cabinet dentaire">
+              <input name="type" placeholder="Ex: Dentaire">
             </div>
           </div>
           <div class="form-group">
@@ -207,15 +122,15 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Frais d'installation (€)</label>
-              <input name="installation_fee" type="number" step="0.01" placeholder="0.00">
+              <label>Frais d'installation (XOF)</label>
+              <input name="installation_fee" type="number" step="1" placeholder="0">
             </div>
             <div class="form-group">
-              <label>Paiement mensuel (€)</label>
-              <input name="monthly_payment" type="number" step="0.01" placeholder="0.00">
+              <label>Paiement mensuel (XOF)</label>
+              <input name="monthly_payment" type="number" step="1" placeholder="0">
             </div>
           </div>
-          <button class="btn-flat" type="submit">Ajouter le client</button>
+          <button type="submit" class="btn-small">Ajouter le client</button>
         </form>
       </div>
 
@@ -241,7 +156,7 @@
                 <td>{{ client.type or '-' }}</td>
                 <td>{{ client.address or '-' }}</td>
                 <td>{{ client.start_date.strftime('%Y-%m-%d') if client.start_date else '-' }}</td>
-                <td>{{ "%.2f"|format(client.monthly_payment) }} €</td>
+                <td>{{ "{:,.0f}".format(client.monthly_payment) }} XOF</td>
                 <td>
                   <span class="status-badge status-{{ client.status }}">
                     {% if client.status == 'active' %}Actif
@@ -251,9 +166,9 @@
                   </span>
                 </td>
                 <td style="text-align: center;">
-                  <button class="btn-flat-small" onclick="editClient({{ client.id }})">Modifier</button>
-                  <form method="post" action="{{ url_for('admin_clients_delete', client_id=client.id) }}" style="display:inline" onsubmit="return confirmClientDelete('{{ client.name }}')">
-                    <button class="btn-flat-danger-small" type="submit">Supprimer</button>
+                  <button class="btn-small" onclick="editClient({{ client.id }})">Modifier</button>
+                  <form method="post" action="{{ url_for('clients_delete', client_id=client.id) }}" style="display:inline" onsubmit="return confirmClientDelete('{{ client.name }}')">
+                    <button class="btn-danger-small" type="submit">Supprimer</button>
                   </form>
                 </td>
               </tr>
@@ -263,28 +178,13 @@
         </div>
         <p class="user-count">Total des clients: {{ clients|length }}</p>
       </div>
-      {% endif %}
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="delete-modal-overlay" id="deleteModal">
-      <div class="delete-modal">
-        <h3>Confirmation de suppression</h3>
-        <p>Vous êtes sur le point de supprimer l'utilisateur <span class="username-highlight" id="deleteUsername"></span>.</p>
-        <p>Pour confirmer, veuillez taper le mot <strong>"supprimer"</strong> :</p>
-        <input type="text" id="deleteConfirmInput" placeholder="Tapez 'supprimer'">
-        <div class="delete-modal-actions">
-          <button type="button" class="delete-modal-cancel" onclick="closeDeleteModal()">Annuler</button>
-          <button type="button" class="delete-modal-confirm" id="confirmDeleteBtn" disabled onclick="submitDelete()">Supprimer</button>
-        </div>
-      </div>
     </div>
 
     <!-- Edit Client Modal -->
     <div class="delete-modal-overlay" id="editClientModal">
       <div class="delete-modal" style="max-width: 600px;">
         <h3>Modifier le Client</h3>
-        <form id="editClientForm" method="post" class="admin-form">
+        <form id="editClientForm" method="post" class="admin-form" style="display: block;">
           <div class="form-row">
             <div class="form-group">
               <label>Nom du client *</label>
@@ -311,12 +211,12 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Frais d'installation (€)</label>
-              <input name="installation_fee" id="edit_installation_fee" type="number" step="0.01">
+              <label>Frais d'installation (XOF)</label>
+              <input name="installation_fee" id="edit_installation_fee" type="number" step="1">
             </div>
             <div class="form-group">
-              <label>Paiement mensuel (€)</label>
-              <input name="monthly_payment" id="edit_monthly_payment" type="number" step="0.01">
+              <label>Paiement mensuel (XOF)</label>
+              <input name="monthly_payment" id="edit_monthly_payment" type="number" step="1">
             </div>
           </div>
           <div class="form-group">
@@ -329,7 +229,7 @@
           </div>
           <div class="delete-modal-actions">
             <button type="button" class="delete-modal-cancel" onclick="closeEditClientModal()">Annuler</button>
-            <button type="submit" class="btn-flat">Sauvegarder</button>
+            <button type="submit" class="btn-small">Sauvegarder</button>
           </div>
         </form>
       </div>
@@ -348,64 +248,45 @@
         }
       }, 5000);
 
-      // Delete confirmation modal
-      let currentDeleteForm = null;
-
-      function confirmDelete(username) {
-        currentDeleteForm = event.target.closest('form');
-        document.getElementById('deleteUsername').textContent = username;
-        document.getElementById('deleteConfirmInput').value = '';
-        document.getElementById('confirmDeleteBtn').disabled = true;
-        document.getElementById('deleteModal').classList.add('active');
-        
-        // Focus on input after modal opens
-        setTimeout(() => {
-          document.getElementById('deleteConfirmInput').focus();
-        }, 100);
-        
-        return false; // Prevent form submission
+      // Client management functions
+      function editClient(clientId) {
+        fetch('/api/clients/' + clientId)
+          .then(response => response.json())
+          .then(client => {
+            document.getElementById('edit_name').value = client.name || '';
+            document.getElementById('edit_type').value = client.type || '';
+            document.getElementById('edit_address').value = client.address || '';
+            document.getElementById('edit_installation_fee').value = client.installation_fee || '';
+            document.getElementById('edit_monthly_payment').value = client.monthly_payment || '';
+            document.getElementById('edit_status').value = client.status || 'active';
+            
+            document.getElementById('editClientForm').action = '/clients/edit/' + clientId;
+            document.getElementById('editClientModal').classList.add('active');
+          })
+          .catch(err => {
+            alert('Erreur lors du chargement des données du client');
+          });
       }
 
-      function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.remove('active');
-        currentDeleteForm = null;
+      function closeEditClientModal() {
+        document.getElementById('editClientModal').classList.remove('active');
       }
 
-      function submitDelete() {
-        if (currentDeleteForm) {
-          currentDeleteForm.submit();
-        }
-        closeDeleteModal();
+      function confirmClientDelete(clientName) {
+        return confirm('Voulez-vous vraiment supprimer le client "' + clientName + '" ?');
       }
 
-      // Enable/disable confirm button based on input
-      document.getElementById('deleteConfirmInput').addEventListener('input', function(e) {
-        const confirmBtn = document.getElementById('confirmDeleteBtn');
-        if (e.target.value.toLowerCase() === 'supprimer') {
-          confirmBtn.disabled = false;
-        } else {
-          confirmBtn.disabled = true;
-        }
-      });
-
-      // Allow Enter key to submit if input is correct
-      document.getElementById('deleteConfirmInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && e.target.value.toLowerCase() === 'supprimer') {
-          submitDelete();
-        }
-      });
-
-      // Close modal on overlay click
-      document.getElementById('deleteModal').addEventListener('click', function(e) {
+      // Close edit modal on overlay click
+      document.getElementById('editClientModal').addEventListener('click', function(e) {
         if (e.target === this) {
-          closeDeleteModal();
+          closeEditClientModal();
         }
       });
 
-      // Close modal on Escape key
+      // Close edit modal on Escape key
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && document.getElementById('deleteModal').classList.contains('active')) {
-          closeDeleteModal();
+        if (e.key === 'Escape' && document.getElementById('editClientModal').classList.contains('active')) {
+          closeEditClientModal();
         }
       });
     </script>

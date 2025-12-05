@@ -70,3 +70,24 @@ class Expense(db.Model):
     
     def __repr__(self):
         return f'<Expense {self.description}: {self.amount}>'
+
+
+class Client(db.Model):
+    """
+    Client model for tracking medical office clients.
+    
+    Stores client information for easy receipt generation and recurring payments.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False, index=True)
+    type = db.Column(db.String(100))  # e.g., "Cabinet dentaire", "Cabinet médical"
+    address = db.Column(db.String(500))
+    start_date = db.Column(db.Date, nullable=False)
+    installation_fee = db.Column(db.Float, default=0.0)
+    monthly_payment = db.Column(db.Float, default=0.0)
+    status = db.Column(db.String(50), default='active')  # e.g., "active", "stopped", "pending"
+    end_date = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    
+    def __repr__(self):
+        return f'<Client {self.name}>'
