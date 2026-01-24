@@ -165,6 +165,156 @@ def clients():
     return render_template('clients.html', clients=clients)
 
 
+@app.route('/clients-view')
+@login_required
+def clients_view():
+    # Public clients page - accessible to all users - show all clients
+    clients = Client.query.order_by(Client.name).all()
+    return render_template('clients_view.html', clients=clients)
+
+
+@app.route('/clients-view/add', methods=['POST'])
+@login_required
+def clients_view_add():
+    """Add a client from the public clients view (Conversation status)"""
+    name = request.form.get('name', '').strip()
+    client_type = request.form.get('type', '').strip()
+    address = request.form.get('address', '').strip()
+    
+    if not name:
+        flash('Le nom du client est requis', 'danger')
+        return redirect(url_for('clients_view'))
+    
+    try:
+        new_client = Client(
+            name=name,
+            type=client_type if client_type else None,
+            address=address if address else None,
+            status='Conversation'
+        )
+        db.session.add(new_client)
+        db.session.commit()
+        flash(f'Client {name} ajouté avec succès', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors de l\'ajout du client: {str(e)}', 'danger')
+    
+    return redirect(url_for('clients_view'))
+
+
+@app.route('/clients-view/start/<int:client_id>', methods=['POST'])
+@login_required
+def clients_view_start(client_id):
+    """Start a Conversation status client by adding details and changing status to active"""
+    client = Client.query.get(client_id)
+    
+    if not client:
+        flash('Client non trouvé', 'danger')
+        return redirect(url_for('clients_view'))
+    
+    if client.status != 'Conversation':
+        flash('Ce client ne peut pas être démarré', 'danger')
+        return redirect(url_for('clients_view'))
+    
+    try:
+        monthly_payment = request.form.get('monthly_payment', '').strip()
+        installation_fee = request.form.get('installation_fee', '').strip()
+        start_date = request.form.get('start_date', '').strip()
+        
+        if not monthly_payment or not start_date:
+            flash('Le paiement mensuel et la date sont requis', 'danger')
+            return redirect(url_for('clients_view'))
+        
+        client.monthly_payment = float(monthly_payment)
+        client.installation_fee = float(installation_fee) if installation_fee else 0.0
+        client.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        client.status = 'active'
+        
+        db.session.commit()
+        flash(f'Client {client.name} démarré avec succès', 'success')
+    except ValueError as e:
+        db.session.rollback()
+        flash(f'Valeurs numériques invalides: {str(e)}', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors du démarrage du client: {str(e)}', 'danger')
+    
+    return redirect(url_for('clients_view'))
+
+
+@app.route('/clients-view/<int:client_id>/generate-receipt')
+@login_required
+def generate_client_receipt(client_id):
+    """Generate a monthly receipt for a client. If one already exists for this month, use it."""
+    client = Client.query.get_or_404(client_id)
+    
+    if client.status != 'active':
+        flash('Seuls les clients actifs peuvent générer des reçus', 'danger')
+        return redirect(url_for('clients_view'))
+    
+    # Check if receipt already exists for this month
+    from datetime import date
+    current_month_start = date.today().replace(day=1)
+    
+    # Find last day of current month
+    if date.today().month == 12:
+        current_month_end = date.today().replace(year=date.today().year + 1, month=1, day=1)
+    else:
+        current_month_end = date.today().replace(month=date.today().month + 1, day=1)
+    
+    existing_receipt = Receipt.query.filter(
+        Receipt.client_id == client_id,
+        Receipt.date >= datetime.combine(current_month_start, datetime.min.time()),
+        Receipt.date < datetime.combine(current_month_end, datetime.min.time())
+    ).first()
+    
+    if existing_receipt:
+        # Redirect to existing receipt
+        return redirect(url_for('preview_receipt', receipt_id=existing_receipt.id))
+    
+    # Create new receipt for this month
+    try:
+        receipt_number = f"REC-{int(datetime.now().timestamp())}"
+        
+        # Convert amount to words (simple format)
+        amount_str = f"{client.monthly_payment:.2f}".replace('.', ',')
+        amount_in_letters = f"{amount_str} FCFA"
+        
+        current_user = User.query.filter_by(username=session.get('username')).first()
+        
+        new_receipt = Receipt(
+            receipt_number=receipt_number,
+            customer_name=client.name,
+            description=f"Paiement mensuel - {client.name}",
+            payment_type='recurring_monthly',
+            price=client.monthly_payment,
+            amount_in_letters=amount_in_letters,
+            date=datetime.now(),
+            user_id=current_user.id if current_user else None,
+            client_id=client_id
+        )
+        
+        db.session.add(new_receipt)
+        db.session.commit()
+        
+        flash(f'Reçu généré pour {client.name}', 'success')
+        return redirect(url_for('preview_receipt', receipt_id=new_receipt.id))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors de la génération du reçu: {str(e)}', 'danger')
+        return redirect(url_for('clients_view'))
+
+
+@app.route('/clients-view/<int:client_id>/receipts')
+@login_required
+def client_receipts(client_id):
+    """View all receipts for a specific client"""
+    client = Client.query.get_or_404(client_id)
+    receipts = Receipt.query.filter_by(client_id=client_id).order_by(Receipt.date.desc()).all()
+    return render_template('client_receipts.html', client=client, receipts=receipts)
+
+
 @app.route('/clients/add', methods=['POST'])
 @login_required
 def clients_add():

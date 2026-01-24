@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clients</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="main-menu">
+    <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    
+    <div class="nav-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      <a href="/clients-view" class="active">Clients</a>
+    </div>
+    
+    <div class="profile-menu">
+      <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <div class="profile-dropdown">
+        {% if session.username == 'admin' %}
+        <a href="/admin">Gérer les utilisateurs</a>
+        <a href="/clients">Gérer les clients</a>
+        {% endif %}
+        <a href="/account">Mon compte</a>
+        <a href="/logout">Déconnexion</a>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="profile-info">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <button class="close-menu" onclick="closeMobileMenu()" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      <a href="/clients-view" class="active">Clients</a>
+    </div>
+    <div class="mobile-menu-profile">
+      {% if session.username == 'admin' %}
+      <a href="/admin">Gérer les utilisateurs</a>
+      <a href="/clients">Gérer les clients</a>
+      {% endif %}
+      <a href="/account">Mon compte</a>
+      <a href="/logout">Déconnexion</a>
+    </div>
+  </div>
+
+  <div style="padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1>Nos Clients</h1>
+      <button class="btn-flat" onclick="openNewClientModal()" style="padding: 0.8rem 1.5rem;">+ Ajouter un client</button>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" onclick="filterClients('all')" data-status="all">Tous</button>
+      <button class="tab-btn" onclick="filterClients('Conversation')" data-status="Conversation">En conversation</button>
+      <button class="tab-btn" onclick="filterClients('active')" data-status="active">Actifs</button>
+      <button class="tab-btn" onclick="filterClients('inactive')" data-status="inactive">Inactifs</button>
+    </div>
+    
+    <div class="clients-grid">
+      {% if clients %}
+        {% for client in clients %}
+        <div class="client-card" data-status="{{ client.status }}">
+          <div class="client-card-header">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <h2>{{ client.name }}</h2>
+                {% if client.type %}
+                <p class="client-type">{{ client.type }}</p>
+                {% endif %}
+              </div>
+              <span class="status-badge status-{{ client.status }}">{{ client.status }}</span>
+            </div>
+          </div>
+          
+          <div class="client-card-body">
+            {% if client.address %}
+            <div class="client-info">
+              <strong>Adresse:</strong>
+              <p>{{ client.address }}</p>
+            </div>
+            {% endif %}
+            
+            {% if client.monthly_payment %}
+            <div class="client-info">
+              <strong>Paiement mensuel:</strong>
+              <p>{{ "%.2f"|format(client.monthly_payment) }} FCFA</p>
+            </div>
+            {% endif %}
+            
+            {% if client.installation_fee and client.installation_fee > 0 %}
+            <div class="client-info">
+              <strong>Frais d'installation:</strong>
+              <p>{{ "%.2f"|format(client.installation_fee) }} FCFA</p>
+            </div>
+            {% endif %}
+            
+            <div class="client-info">
+              <strong>Depuis le:</strong>
+              <p>{{ client.start_date.strftime('%d/%m/%Y') if client.start_date else 'N/A' }}</p>
+            </div>
+          </div>
+          
+          <div class="client-card-footer">
+            {% if client.status == 'Conversation' %}
+              <button class="btn-flat" onclick="openStartClientModal({{ client.id }}, '{{ client.name }}')" style="width: 100%; margin-bottom: 0.5rem;">Démarrer le client</button>
+            {% else %}
+              <a href="{{ url_for('generate_client_receipt', client_id=client.id) }}" class="btn-flat" style="text-decoration: none; display: block; text-align: center;">Générer Reçu</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="no-clients">Aucun client disponible pour le moment.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Start Client Modal -->
+  <div class="modal-overlay" id="startClientModal" onclick="if(event.target === this) closeStartClientModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Démarrer le client: <span id="startClientName"></span></h2>
+        <button class="modal-close" onclick="closeStartClientModal()">&times;</button>
+      </div>
+      <form id="startClientForm" method="post" action="" class="modal-form">
+        <div class="form-group">
+          <label>Paiement mensuel (FCFA) *</label>
+          <input type="number" name="monthly_payment" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Frais d'installation (FCFA)</label>
+          <input type="number" name="installation_fee" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Date de démarrage *</label>
+          <input type="date" name="start_date" required>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-flat">Démarrer le client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New Client Modal -->
+  <div class="modal-overlay" id="newClientModal" onclick="if(event.target === this) closeNewClientModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Ajouter un nouveau client</h2>
+        <button class="modal-close" onclick="closeNewClientModal()">&times;</button>
+      </div>
+      <form method="post" action="{{ url_for('clients_view_add') }}" class="modal-form">
+        <div class="form-group">
+          <label>Nom du client *</label>
+          <input type="text" name="name" placeholder="Ex: Cabinet Dr. Dupont" required>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <input type="text" name="type" placeholder="Ex: Cabinet dentaire">
+        </div>
+        <div class="form-group">
+          <label>Adresse</label>
+          <input type="text" name="address" placeholder="Ex: 123 Rue de la Santé, 75000 Paris">
+        </div>
+        <input type="hidden" name="status" value="Conversation">
+        <div class="modal-actions">
+          <button type="submit" class="btn-flat">Ajouter le client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openNewClientModal() {
+      document.getElementById('newClientModal').classList.add('active');
+    }
+
+    function closeNewClientModal() {
+      document.getElementById('newClientModal').classList.remove('active');
+    }
+
+    function openStartClientModal(clientId, clientName) {
+      document.getElementById('startClientName').textContent = clientName;
+      document.getElementById('startClientForm').action = `/clients-view/start/${clientId}`;
+      document.getElementById('startClientModal').classList.add('active');
+    }
+
+    function closeStartClientModal() {
+      document.getElementById('startClientModal').classList.remove('active');
+    }
+
+    // Close modal when pressing Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('newClientModal').classList.contains('active')) {
+        closeNewClientModal();
+      }
+    });
+
+    // Filter clients by status
+    function filterClients(status) {
+      // Update active button
+      document.querySelectorAll('.dashboard-tabs .tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      // Filter client cards
+      const cards = document.querySelectorAll('.client-card');
+      cards.forEach(card => {
+        const cardStatus = card.getAttribute('data-status');
+        if (status === 'all' || cardStatus === status) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -34,6 +34,7 @@ class Receipt(db.Model):
     Receipt model for generated PDF receipts.
     
     Each receipt has a unique number and is associated with the user who created it.
+    Can also be linked to a Client for automatic monthly billing.
     Supports recurring monthly payments and one-time payments with custom reasons.
     """
     id = db.Column(db.Integer, primary_key=True)
@@ -46,8 +47,10 @@ class Receipt(db.Model):
     amount_in_letters = db.Column(db.String(200), nullable=False)
     date = db.Column(db.DateTime, default=datetime.now, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, index=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True, index=True)
     
     user = db.relationship('User', backref='receipts')
+    client = db.relationship('Client', backref='receipts')
     
     def __repr__(self):
         return f'<Receipt {self.receipt_number}>'
@@ -74,19 +77,23 @@ class Expense(db.Model):
 
 class Client(db.Model):
     """
-    Client model for tracking medical office clients.
+    Client model for tracking clients and their service lifecycle.
     
-    Stores client information for easy receipt generation and recurring payments.
+    Status progression:
+    - 'Conversation': Initial contact, minimal info (name, type, address only)
+    - 'active': Working with client, full info (start_date, monthly_payment, installation_fee)
+    - 'inactive': Stopped working with client
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False, index=True)
     type = db.Column(db.String(100))  # e.g., "Cabinet dentaire", "Cabinet médical"
     address = db.Column(db.String(500))
-    start_date = db.Column(db.Date, nullable=False)
+    start_date = db.Column(db.Date, nullable=True)  # Null for "Conversation" status clients
     installation_fee = db.Column(db.Float, default=0.0)
     monthly_payment = db.Column(db.Float, default=0.0)
-    status = db.Column(db.String(50), default='active')  # e.g., "active", "stopped", "pending"
+    status = db.Column(db.String(50), default='Conversation')  # "Conversation", "active", "inactive"
     end_date = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     def __repr__(self):

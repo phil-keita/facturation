@@ -46,7 +46,16 @@ def import_clients():
             address = row[2]
             start_date = row[5]
             payment_info = row[6]
-            status = row[4] if row[4] else 'pending'
+            status_raw = row[4] if row[4] else 'Conversation'
+            
+            # Map Excel status to database status
+            status = status_raw.lower().strip()
+            if status in ['livré', 'active', 'en cours de livraison']:
+                status = 'active'
+            elif status in ['en attente', 'conversation', 'pending']:
+                status = 'Conversation'
+            else:
+                status = 'Conversation'
             
             # Skip empty rows
             if not name:

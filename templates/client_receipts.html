@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reçus - {{ client.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="main-menu">
+    <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    
+    <div class="nav-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      <a href="/clients-view">Clients</a>
+    </div>
+    
+    <div class="profile-menu">
+      <div class="profile-trigger" onclick="this.parentElement.classList.toggle('active')">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <div class="profile-dropdown">
+        {% if session.username == 'admin' %}
+        <a href="/admin">Gérer les utilisateurs</a>
+        <a href="/clients">Gérer les clients</a>
+        {% endif %}
+        <a href="/account">Mon compte</a>
+        <a href="/logout">Déconnexion</a>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="profile-info">
+        <div class="profile-avatar">{{ session.username[0] if session.username else 'U' }}</div>
+        <span class="profile-name">{{ session.username }}</span>
+      </div>
+      <button class="close-menu" onclick="closeMobileMenu()" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="/">Reçu</a>
+      <a href="/expenses">Dépense</a>
+      <a href="/dashboard">Tableau de bord</a>
+      <a href="/clients-view">Clients</a>
+    </div>
+    <div class="mobile-menu-profile">
+      {% if session.username == 'admin' %}
+      <a href="/admin">Gérer les utilisateurs</a>
+      <a href="/clients">Gérer les clients</a>
+      {% endif %}
+      <a href="/account">Mon compte</a>
+      <a href="/logout">Déconnexion</a>
+    </div>
+  </div>
+
+  <div style="padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div>
+        <a href="/clients-view" style="color: #00bcd4; text-decoration: none; font-size: 0.9rem;">← Retour aux clients</a>
+        <h1>Reçus de {{ client.name }}</h1>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages">
+        {% for category, msg in messages %}
+          <li class="{{ category }}">{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% if receipts %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+        {% for receipt in receipts %}
+          <div style="background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #00bcd4;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div>
+                <p style="margin: 0; color: #666; font-size: 0.85rem;">ID Reçu</p>
+                <p style="margin: 0; font-weight: 600; font-size: 1.1rem;">{{ receipt.receipt_number }}</p>
+              </div>
+              <span style="background: #f0f0f0; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; color: #666;">
+                {{ receipt.date.strftime('%d/%m/%Y') }}
+              </span>
+            </div>
+            
+            <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e0e0e0;">
+              <p style="margin: 0; font-size: 0.9rem; color: #666;"><strong>Description:</strong> {{ receipt.description }}</p>
+              <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;"><strong>Montant:</strong> {{ "%.2f"|format(receipt.price) }} FCFA</p>
+              {% if receipt.payment_reason %}
+              <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;"><strong>Raison:</strong> {{ receipt.payment_reason }}</p>
+              {% endif %}
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem;">
+              <a href="{{ url_for('preview_receipt', receipt_id=receipt.id) }}" class="btn-flat" style="flex: 1; text-align: center; text-decoration: none; padding: 0.6rem; font-size: 0.9rem;">Aperçu</a>
+              <a href="{{ url_for('download_receipt', receipt_id=receipt.id) }}" class="btn-secondary-light" style="flex: 1; text-align: center; text-decoration: none; padding: 0.6rem; font-size: 0.9rem;">Télécharger</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 3rem; text-align: center;">
+        <p style="color: #666; margin-bottom: 1rem;">Aucun reçu disponible pour ce client.</p>
+        <p style="color: #999; font-size: 0.9rem;">Les reçus mensuels seront générés automatiquement.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function toggleMobileMenu() {
+      document.querySelector('.mobile-menu').classList.toggle('active');
+      document.querySelector('.mobile-overlay').classList.toggle('active');
+      document.body.style.overflow = document.querySelector('.mobile-menu').classList.contains('active') ? 'hidden' : '';
+    }
+    
+    function closeMobileMenu() {
+      document.querySelector('.mobile-menu').classList.remove('active');
+      document.querySelector('.mobile-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  </script>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
