@@ -146,7 +146,8 @@
                 <th>Début</th>
                 <th>Mensuel</th>
                 <th>Statut</th>
-                <th style="width: 180px; text-align: center;">Actions</th>
+                <th style="width: 100px; text-align: center;">Modifier</th>
+                <th style="width: 100px; text-align: center;">Supprimer</th>
               </tr>
             </thead>
             <tbody>
@@ -167,6 +168,8 @@
                 </td>
                 <td style="text-align: center;">
                   <button class="btn-small" onclick="editClient({{ client.id }})">Modifier</button>
+                </td>
+                <td style="text-align: center;">
                   <form method="post" action="{{ url_for('clients_delete', client_id=client.id) }}" style="display:inline" onsubmit="return confirmClientDelete('{{ client.name }}')">
                     <button class="btn-danger-small" type="submit">Supprimer</button>
                   </form>
